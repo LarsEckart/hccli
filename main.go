@@ -16,9 +16,9 @@ func main() {
 		Usage: "Honeycomb API CLI",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:    "api-key",
-				Sources: cli.EnvVars("HONEYCOMB_API_KEY"),
-				Usage:   "Honeycomb API key",
+				Name:     "api-key",
+				Sources:  cli.EnvVars("HONEYCOMB_API_KEY"),
+				Usage:    "Honeycomb API key",
 				Required: true,
 			},
 		},
