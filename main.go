@@ -28,10 +28,12 @@ func main() {
 			listBoardsCmd(),
 			getBoardCmd(),
 			createBoardCmd(),
+			updateBoardCmd(),
 			deleteBoardCmd(),
 			createBoardViewCmd(),
 			getQueryCmd(),
 			createQueryCmd(),
+			createQueryAnnotationCmd(),
 		},
 	}
 
@@ -141,6 +143,77 @@ func createBoardCmd() *cli.Command {
 			enc := json.NewEncoder(os.Stdout)
 			enc.SetIndent("", "  ")
 			return enc.Encode(created)
+		},
+	}
+}
+
+func updateBoardCmd() *cli.Command {
+	return &cli.Command{
+		Name:  "update-board",
+		Usage: "Update a board by ID",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:     "id",
+				Usage:    "Board ID",
+				Required: true,
+			},
+			&cli.StringFlag{
+				Name:     "name",
+				Usage:    "Board name",
+				Required: true,
+			},
+			&cli.StringFlag{
+				Name:  "description",
+				Usage: "Board description",
+			},
+			&cli.StringFlag{
+				Name:  "query-id",
+				Usage: "Query ID for a panel",
+			},
+			&cli.StringFlag{
+				Name:  "query-annotation-id",
+				Usage: "Query annotation ID for a panel",
+			},
+			&cli.StringFlag{
+				Name:  "query-style",
+				Usage: "Query style (graph, table, combo)",
+				Value: "graph",
+			},
+		},
+		Action: func(ctx context.Context, cmd *cli.Command) error {
+			client := newClient(cmd)
+
+			board := &api.Board{
+				Name:        cmd.String("name"),
+				Description: cmd.String("description"),
+				Type:        "flexible",
+			}
+
+			if qid := cmd.String("query-id"); qid != "" {
+				style := cmd.String("query-style")
+				if style == "" {
+					style = "graph"
+				}
+				board.Panels = []api.BoardPanel{
+					{
+						Type: "query",
+						QueryPanel: &api.QueryPanel{
+							QueryID:           qid,
+							QueryAnnotationID: cmd.String("query-annotation-id"),
+							QueryStyle:        style,
+						},
+					},
+				}
+			}
+
+			updated, err := client.UpdateBoard(ctx, cmd.String("id"), board)
+			if err != nil {
+				return err
+			}
+
+			enc := json.NewEncoder(os.Stdout)
+			enc.SetIndent("", "  ")
+			return enc.Encode(updated)
 		},
 	}
 }
@@ -326,6 +399,54 @@ func createQueryCmd() *cli.Command {
 			}
 
 			created, err := client.CreateQuery(ctx, cmd.String("dataset"), query)
+			if err != nil {
+				return err
+			}
+
+			enc := json.NewEncoder(os.Stdout)
+			enc.SetIndent("", "  ")
+			return enc.Encode(created)
+		},
+	}
+}
+
+func createQueryAnnotationCmd() *cli.Command {
+	return &cli.Command{
+		Name:  "create-query-annotation",
+		Usage: "Create a query annotation",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:     "dataset",
+				Usage:    "Dataset slug (use __all__ for environment-wide)",
+				Required: true,
+			},
+			&cli.StringFlag{
+				Name:     "query-id",
+				Usage:    "Query ID to annotate",
+				Required: true,
+			},
+			&cli.StringFlag{
+				Name:     "name",
+				Usage:    "Annotation name",
+				Required: true,
+			},
+			&cli.StringFlag{
+				Name:  "description",
+				Usage: "Annotation description",
+			},
+		},
+		Action: func(ctx context.Context, cmd *cli.Command) error {
+			client := newClient(cmd)
+
+			annotation := &api.QueryAnnotation{
+				Name:    cmd.String("name"),
+				QueryID: cmd.String("query-id"),
+			}
+			if v := cmd.String("description"); v != "" {
+				annotation.Description = v
+			}
+
+			created, err := client.CreateQueryAnnotation(ctx, cmd.String("dataset"), annotation)
 			if err != nil {
 				return err
 			}

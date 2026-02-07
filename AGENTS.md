@@ -9,7 +9,6 @@ Primary focus is easy usability for a coding agent or machine use-case.
 - Install: `make install` (installs hccli binary to $GOPATH/bin)
 - Build: `make build`
 - Test: `make test`
-- Smoke tests require `HONEYCOMB_API_KEY` env var (skipped if not set)
 - Format: `make fmt` (uses goimports)
 - Lint: `make lint` (uses golangci-lint v2)
 - All checks: `make check` (format check + lint + test)

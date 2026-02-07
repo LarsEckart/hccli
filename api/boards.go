@@ -128,6 +128,24 @@ func (c *Client) CreateBoard(ctx context.Context, board *Board) (*Board, error) 
 	return &created, nil
 }
 
+func (c *Client) UpdateBoard(ctx context.Context, boardID string, board *Board) (*Board, error) {
+	body, err := json.Marshal(board)
+	if err != nil {
+		return nil, fmt.Errorf("encoding board: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, c.BaseURL+"/1/boards/"+boardID, bytes.NewReader(body))
+	if err != nil {
+		return nil, err
+	}
+
+	var updated Board
+	if err := c.doJSON(req, &updated); err != nil {
+		return nil, err
+	}
+	return &updated, nil
+}
+
 func (c *Client) CreateBoardView(ctx context.Context, boardID string, view *BoardView) (*BoardView, error) {
 	body, err := json.Marshal(view)
 	if err != nil {

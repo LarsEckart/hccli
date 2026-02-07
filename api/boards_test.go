@@ -53,6 +53,41 @@ func TestCreateAndDeleteBoard_Smoke(t *testing.T) {
 	}
 }
 
+func TestUpdateBoard_Smoke(t *testing.T) {
+	apiKey := os.Getenv("HONEYCOMB_API_KEY")
+	if apiKey == "" {
+		t.Skip("HONEYCOMB_API_KEY not set, skipping smoke test")
+	}
+
+	client := api.NewClient(apiKey)
+
+	board, err := client.CreateBoard(context.Background(), &api.Board{
+		Name: "hccli update smoke test",
+		Type: "flexible",
+	})
+	if err != nil {
+		t.Fatalf("CreateBoard failed: %v", err)
+	}
+	defer func() {
+		_ = client.DeleteBoard(context.Background(), board.ID)
+	}()
+
+	board.Name = "hccli update smoke test updated"
+	board.Description = "updated description"
+
+	updated, err := client.UpdateBoard(context.Background(), board.ID, board)
+	if err != nil {
+		t.Fatalf("UpdateBoard failed: %v", err)
+	}
+
+	if updated.Name != "hccli update smoke test updated" {
+		t.Errorf("expected updated name, got %q", updated.Name)
+	}
+	if updated.Description != "updated description" {
+		t.Errorf("expected updated description, got %q", updated.Description)
+	}
+}
+
 func TestCreateBoardView_Smoke(t *testing.T) {
 	apiKey := os.Getenv("HONEYCOMB_API_KEY")
 	if apiKey == "" {
