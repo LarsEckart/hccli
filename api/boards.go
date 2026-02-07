@@ -75,6 +75,19 @@ type BoardViewFilter struct {
 	Value     any    `json:"value,omitempty"`
 }
 
+func (c *Client) GetBoard(ctx context.Context, boardID string) (*Board, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.BaseURL+"/1/boards/"+boardID, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var board Board
+	if err := c.do(req, &board); err != nil {
+		return nil, err
+	}
+	return &board, nil
+}
+
 func (c *Client) ListBoards(ctx context.Context) ([]Board, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.BaseURL+"/1/boards", nil)
 	if err != nil {

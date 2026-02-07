@@ -26,6 +26,7 @@ func main() {
 			authCmd(),
 			authV2Cmd(),
 			listBoardsCmd(),
+			getBoardCmd(),
 			createBoardCmd(),
 			deleteBoardCmd(),
 			createBoardViewCmd(),
@@ -76,6 +77,32 @@ func listBoardsCmd() *cli.Command {
 			enc := json.NewEncoder(os.Stdout)
 			enc.SetIndent("", "  ")
 			return enc.Encode(boards)
+		},
+	}
+}
+
+func getBoardCmd() *cli.Command {
+	return &cli.Command{
+		Name:  "get-board",
+		Usage: "Get a board by ID",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:     "id",
+				Usage:    "Board ID",
+				Required: true,
+			},
+		},
+		Action: func(ctx context.Context, cmd *cli.Command) error {
+			client := newClient(cmd)
+
+			board, err := client.GetBoard(ctx, cmd.String("id"))
+			if err != nil {
+				return err
+			}
+
+			enc := json.NewEncoder(os.Stdout)
+			enc.SetIndent("", "  ")
+			return enc.Encode(board)
 		},
 	}
 }
