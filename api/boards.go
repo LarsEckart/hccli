@@ -63,6 +63,18 @@ type PresetFilter struct {
 	Alias  string `json:"alias,omitempty"`
 }
 
+type BoardView struct {
+	ID      string            `json:"id,omitempty"`
+	Name    string            `json:"name"`
+	Filters []BoardViewFilter `json:"filters"`
+}
+
+type BoardViewFilter struct {
+	Column    string `json:"column"`
+	Operation string `json:"operation"`
+	Value     any    `json:"value,omitempty"`
+}
+
 func (c *Client) ListBoards(ctx context.Context) ([]Board, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.BaseURL+"/1/boards", nil)
 	if err != nil {
@@ -97,6 +109,24 @@ func (c *Client) CreateBoard(ctx context.Context, board *Board) (*Board, error) 
 	}
 
 	var created Board
+	if err := c.doJSON(req, &created); err != nil {
+		return nil, err
+	}
+	return &created, nil
+}
+
+func (c *Client) CreateBoardView(ctx context.Context, boardID string, view *BoardView) (*BoardView, error) {
+	body, err := json.Marshal(view)
+	if err != nil {
+		return nil, fmt.Errorf("encoding board view: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.BaseURL+"/1/boards/"+boardID+"/views", bytes.NewReader(body))
+	if err != nil {
+		return nil, err
+	}
+
+	var created BoardView
 	if err := c.doJSON(req, &created); err != nil {
 		return nil, err
 	}

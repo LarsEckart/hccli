@@ -28,6 +28,7 @@ func main() {
 			listBoardsCmd(),
 			createBoardCmd(),
 			deleteBoardCmd(),
+			createBoardViewCmd(),
 		},
 	}
 
@@ -129,6 +130,64 @@ func deleteBoardCmd() *cli.Command {
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			client := newClient(cmd)
 			return client.DeleteBoard(ctx, cmd.String("id"))
+		},
+	}
+}
+
+func createBoardViewCmd() *cli.Command {
+	return &cli.Command{
+		Name:  "create-board-view",
+		Usage: "Create a new view for a board",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:     "board-id",
+				Usage:    "Board ID",
+				Required: true,
+			},
+			&cli.StringFlag{
+				Name:     "name",
+				Usage:    "View name",
+				Required: true,
+			},
+			&cli.StringFlag{
+				Name:     "filter-column",
+				Usage:    "Filter column name",
+				Required: true,
+			},
+			&cli.StringFlag{
+				Name:     "filter-op",
+				Usage:    "Filter operation (e.g. =, !=, >, <, starts-with)",
+				Required: true,
+			},
+			&cli.StringFlag{
+				Name:  "filter-value",
+				Usage: "Filter value",
+			},
+		},
+		Action: func(ctx context.Context, cmd *cli.Command) error {
+			client := newClient(cmd)
+
+			filter := api.BoardViewFilter{
+				Column:    cmd.String("filter-column"),
+				Operation: cmd.String("filter-op"),
+			}
+			if v := cmd.String("filter-value"); v != "" {
+				filter.Value = v
+			}
+
+			view := &api.BoardView{
+				Name:    cmd.String("name"),
+				Filters: []api.BoardViewFilter{filter},
+			}
+
+			created, err := client.CreateBoardView(ctx, cmd.String("board-id"), view)
+			if err != nil {
+				return err
+			}
+
+			enc := json.NewEncoder(os.Stdout)
+			enc.SetIndent("", "  ")
+			return enc.Encode(created)
 		},
 	}
 }
