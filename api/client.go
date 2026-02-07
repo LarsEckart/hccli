@@ -33,6 +33,12 @@ func (c *Client) do(req *http.Request, out any) error {
 	return c.doRequest(req, out)
 }
 
+func (c *Client) doJSON(req *http.Request, out any) error {
+	req.Header.Set("X-Honeycomb-Team", c.APIKey)
+	req.Header.Set("Content-Type", "application/json")
+	return c.doRequest(req, out)
+}
+
 func (c *Client) doRequest(req *http.Request, out any) error {
 	resp, err := c.HTTP.Do(req)
 	if err != nil {

@@ -25,6 +25,9 @@ func main() {
 		Commands: []*cli.Command{
 			authCmd(),
 			authV2Cmd(),
+			listBoardsCmd(),
+			createBoardCmd(),
+			deleteBoardCmd(),
 		},
 	}
 
@@ -53,6 +56,79 @@ func authV2Cmd() *cli.Command {
 			enc := json.NewEncoder(os.Stdout)
 			enc.SetIndent("", "  ")
 			return enc.Encode(auth)
+		},
+	}
+}
+
+func listBoardsCmd() *cli.Command {
+	return &cli.Command{
+		Name:  "boards",
+		Usage: "List all boards",
+		Action: func(ctx context.Context, cmd *cli.Command) error {
+			client := newClient(cmd)
+
+			boards, err := client.ListBoards(ctx)
+			if err != nil {
+				return err
+			}
+
+			enc := json.NewEncoder(os.Stdout)
+			enc.SetIndent("", "  ")
+			return enc.Encode(boards)
+		},
+	}
+}
+
+func createBoardCmd() *cli.Command {
+	return &cli.Command{
+		Name:  "create-board",
+		Usage: "Create a new board",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:     "name",
+				Usage:    "Board name",
+				Required: true,
+			},
+			&cli.StringFlag{
+				Name:  "description",
+				Usage: "Board description",
+			},
+		},
+		Action: func(ctx context.Context, cmd *cli.Command) error {
+			client := newClient(cmd)
+
+			board := &api.Board{
+				Name:        cmd.String("name"),
+				Description: cmd.String("description"),
+				Type:        "flexible",
+			}
+
+			created, err := client.CreateBoard(ctx, board)
+			if err != nil {
+				return err
+			}
+
+			enc := json.NewEncoder(os.Stdout)
+			enc.SetIndent("", "  ")
+			return enc.Encode(created)
+		},
+	}
+}
+
+func deleteBoardCmd() *cli.Command {
+	return &cli.Command{
+		Name:  "delete-board",
+		Usage: "Delete a board by ID",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:     "id",
+				Usage:    "Board ID",
+				Required: true,
+			},
+		},
+		Action: func(ctx context.Context, cmd *cli.Command) error {
+			client := newClient(cmd)
+			return client.DeleteBoard(ctx, cmd.String("id"))
 		},
 	}
 }
