@@ -24,6 +24,7 @@ func main() {
 		},
 		Commands: []*cli.Command{
 			authCmd(),
+			authV2Cmd(),
 		},
 	}
 
@@ -35,6 +36,25 @@ func main() {
 
 func newClient(cmd *cli.Command) *api.Client {
 	return api.NewClient(cmd.String("api-key"))
+}
+
+func authV2Cmd() *cli.Command {
+	return &cli.Command{
+		Name:  "auth-v2",
+		Usage: "Show management API key info and permissions (v2)",
+		Action: func(ctx context.Context, cmd *cli.Command) error {
+			client := newClient(cmd)
+
+			auth, err := client.GetAuthV2(ctx)
+			if err != nil {
+				return err
+			}
+
+			enc := json.NewEncoder(os.Stdout)
+			enc.SetIndent("", "  ")
+			return enc.Encode(auth)
+		},
+	}
 }
 
 func authCmd() *cli.Command {

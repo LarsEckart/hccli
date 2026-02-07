@@ -23,9 +23,17 @@ func NewClient(apiKey string) *Client {
 	}
 }
 
+func (c *Client) doBearer(req *http.Request, out any) error {
+	req.Header.Set("Authorization", "Bearer "+c.APIKey)
+	return c.doRequest(req, out)
+}
+
 func (c *Client) do(req *http.Request, out any) error {
 	req.Header.Set("X-Honeycomb-Team", c.APIKey)
+	return c.doRequest(req, out)
+}
 
+func (c *Client) doRequest(req *http.Request, out any) error {
 	resp, err := c.HTTP.Do(req)
 	if err != nil {
 		return fmt.Errorf("request failed: %w", err)
