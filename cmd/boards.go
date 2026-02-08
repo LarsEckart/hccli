@@ -16,12 +16,10 @@ func ListBoardsCmd() *cli.Command {
 		Usage:    "List all boards",
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			client := newClient(cmd)
-
 			boards, err := client.ListBoards(ctx)
 			if err != nil {
 				return err
 			}
-
 			return printJSON(boards)
 		},
 	}
@@ -41,12 +39,10 @@ func GetBoardCmd() *cli.Command {
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			client := newClient(cmd)
-
 			board, err := client.GetBoard(ctx, cmd.String("id"))
 			if err != nil {
 				return err
 			}
-
 			return printJSON(board)
 		},
 	}
@@ -70,18 +66,15 @@ func CreateBoardCmd() *cli.Command {
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			client := newClient(cmd)
-
 			board := &api.Board{
 				Name:        cmd.String("name"),
 				Description: cmd.String("description"),
 				Type:        "flexible",
 			}
-
 			created, err := client.CreateBoard(ctx, board)
 			if err != nil {
 				return err
 			}
-
 			return printJSON(created)
 		},
 	}
@@ -135,7 +128,6 @@ from get-board output. This enables adding or removing individual panels:
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			client := newClient(cmd)
-
 			board := &api.Board{
 				Name:        cmd.String("name"),
 				Description: cmd.String("description"),
@@ -169,7 +161,6 @@ from get-board output. This enables adding or removing individual panels:
 			if err != nil {
 				return err
 			}
-
 			return printJSON(updated)
 		},
 	}
