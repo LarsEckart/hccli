@@ -57,6 +57,10 @@ func main() {
 			createMarkerCmd(),
 			updateMarkerCmd(),
 			deleteMarkerCmd(),
+			listMarkerSettingsCmd(),
+			createMarkerSettingCmd(),
+			updateMarkerSettingCmd(),
+			deleteMarkerSettingCmd(),
 		},
 	}
 
@@ -1150,6 +1154,142 @@ func deleteDatasetCmd() *cli.Command {
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			client := newClient(cmd)
 			return client.DeleteDataset(ctx, cmd.String("slug"))
+		},
+	}
+}
+
+func listMarkerSettingsCmd() *cli.Command {
+	return &cli.Command{
+		Name:  "marker-settings",
+		Usage: "List all marker settings for a dataset",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:     "dataset",
+				Usage:    "Dataset slug (use __all__ for environment-wide)",
+				Required: true,
+			},
+		},
+		Action: func(ctx context.Context, cmd *cli.Command) error {
+			client := newClient(cmd)
+
+			settings, err := client.ListMarkerSettings(ctx, cmd.String("dataset"))
+			if err != nil {
+				return err
+			}
+
+			enc := json.NewEncoder(os.Stdout)
+			enc.SetIndent("", "  ")
+			return enc.Encode(settings)
+		},
+	}
+}
+
+func createMarkerSettingCmd() *cli.Command {
+	return &cli.Command{
+		Name:  "create-marker-setting",
+		Usage: "Create a marker setting in a dataset",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:     "dataset",
+				Usage:    "Dataset slug (use __all__ for environment-wide)",
+				Required: true,
+			},
+			&cli.StringFlag{
+				Name:     "type",
+				Usage:    "Marker type (e.g. deploy)",
+				Required: true,
+			},
+			&cli.StringFlag{
+				Name:     "color",
+				Usage:    "Color as hexadecimal RGB (e.g. #FF0000)",
+				Required: true,
+			},
+		},
+		Action: func(ctx context.Context, cmd *cli.Command) error {
+			client := newClient(cmd)
+
+			ms := &api.MarkerSetting{
+				Type:  cmd.String("type"),
+				Color: cmd.String("color"),
+			}
+
+			created, err := client.CreateMarkerSetting(ctx, cmd.String("dataset"), ms)
+			if err != nil {
+				return err
+			}
+
+			enc := json.NewEncoder(os.Stdout)
+			enc.SetIndent("", "  ")
+			return enc.Encode(created)
+		},
+	}
+}
+
+func updateMarkerSettingCmd() *cli.Command {
+	return &cli.Command{
+		Name:  "update-marker-setting",
+		Usage: "Update a marker setting by ID",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:     "dataset",
+				Usage:    "Dataset slug (use __all__ for environment-wide)",
+				Required: true,
+			},
+			&cli.StringFlag{
+				Name:     "id",
+				Usage:    "Marker setting ID",
+				Required: true,
+			},
+			&cli.StringFlag{
+				Name:     "type",
+				Usage:    "Marker type (e.g. deploy)",
+				Required: true,
+			},
+			&cli.StringFlag{
+				Name:     "color",
+				Usage:    "Color as hexadecimal RGB (e.g. #FF0000)",
+				Required: true,
+			},
+		},
+		Action: func(ctx context.Context, cmd *cli.Command) error {
+			client := newClient(cmd)
+
+			ms := &api.MarkerSetting{
+				Type:  cmd.String("type"),
+				Color: cmd.String("color"),
+			}
+
+			updated, err := client.UpdateMarkerSetting(ctx, cmd.String("dataset"), cmd.String("id"), ms)
+			if err != nil {
+				return err
+			}
+
+			enc := json.NewEncoder(os.Stdout)
+			enc.SetIndent("", "  ")
+			return enc.Encode(updated)
+		},
+	}
+}
+
+func deleteMarkerSettingCmd() *cli.Command {
+	return &cli.Command{
+		Name:  "delete-marker-setting",
+		Usage: "Delete a marker setting by ID",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:     "dataset",
+				Usage:    "Dataset slug (use __all__ for environment-wide)",
+				Required: true,
+			},
+			&cli.StringFlag{
+				Name:     "id",
+				Usage:    "Marker setting ID",
+				Required: true,
+			},
+		},
+		Action: func(ctx context.Context, cmd *cli.Command) error {
+			client := newClient(cmd)
+			return client.DeleteMarkerSetting(ctx, cmd.String("dataset"), cmd.String("id"))
 		},
 	}
 }
