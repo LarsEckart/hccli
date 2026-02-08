@@ -79,3 +79,37 @@ func TestUpdateBoardCLI_Smoke(t *testing.T) {
 		t.Errorf("expected description 'updated desc', got %v", updated["description"])
 	}
 }
+
+func TestUpdateBoardPanelsJsonCLI_Smoke(t *testing.T) {
+	stdout, _, exitCode := runCLIWithKey(t, "create-board", "--name", "hccli panels-json test")
+	if exitCode != 0 {
+		t.Fatalf("create-board failed with exit code %d", exitCode)
+	}
+	board := parseJSON(t, stdout)
+	id := board["id"].(string)
+	defer runCLIWithKey(t, "delete-board", "--id", id)
+
+	panelsJSON := `[{"type":"text","text_panel":{"content":"hello"}}]`
+	stdout, _, exitCode = runCLIWithKey(t, "update-board", "--id", id, "--name", "hccli panels-json test", "--panels-json", panelsJSON)
+	if exitCode != 0 {
+		t.Fatalf("update-board with panels-json failed with exit code %d", exitCode)
+	}
+
+	updated := parseJSON(t, stdout)
+	panels, ok := updated["panels"].([]any)
+	if !ok || len(panels) != 1 {
+		t.Fatalf("expected 1 panel, got %v", updated["panels"])
+	}
+
+	emptyPanelsJSON := `[]`
+	stdout, _, exitCode = runCLIWithKey(t, "update-board", "--id", id, "--name", "hccli panels-json test", "--panels-json", emptyPanelsJSON)
+	if exitCode != 0 {
+		t.Fatalf("update-board with empty panels-json failed with exit code %d", exitCode)
+	}
+
+	updated = parseJSON(t, stdout)
+	panels, ok = updated["panels"].([]any)
+	if ok && len(panels) != 0 {
+		t.Errorf("expected 0 panels after removal, got %d", len(panels))
+	}
+}

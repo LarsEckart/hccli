@@ -196,6 +196,14 @@ func updateBoardCmd() *cli.Command {
 		Name:     "update-board",
 		Category: "Boards",
 		Usage:    "Update a board by ID",
+		Description: `Update a board's name, description, and panels.
+
+To replace the full set of panels, use --panels-json with a JSON array
+from get-board output. This enables adding or removing individual panels:
+
+  # Get current panels, remove index 1, and update
+  PANELS=$(hccli get-board --id ID | jq 'del(.panels[1]) | .panels')
+  hccli update-board --id ID --name "my board" --panels-json "$PANELS"`,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "id",
@@ -224,6 +232,10 @@ func updateBoardCmd() *cli.Command {
 				Usage: "Query style (graph, table, combo)",
 				Value: "graph",
 			},
+			&cli.StringFlag{
+				Name:  "panels-json",
+				Usage: "Full JSON array of board panels; use get-board output to build it (overrides --query-id)",
+			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			client := newClient(cmd)
@@ -234,7 +246,13 @@ func updateBoardCmd() *cli.Command {
 				Type:        "flexible",
 			}
 
-			if qid := cmd.String("query-id"); qid != "" {
+			if pj := cmd.String("panels-json"); pj != "" {
+				var panels []api.BoardPanel
+				if err := json.Unmarshal([]byte(pj), &panels); err != nil {
+					return fmt.Errorf("parsing panels-json: %w", err)
+				}
+				board.Panels = panels
+			} else if qid := cmd.String("query-id"); qid != "" {
 				style := cmd.String("query-style")
 				if style == "" {
 					style = "graph"
