@@ -1,12 +1,6 @@
 package api
 
-import (
-	"bytes"
-	"context"
-	"encoding/json"
-	"fmt"
-	"net/http"
-)
+import "context"
 
 type Marker struct {
 	ID        string `json:"id,omitempty"`
@@ -21,59 +15,17 @@ type Marker struct {
 }
 
 func (c *Client) ListMarkers(ctx context.Context, dataset string) ([]Marker, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.BaseURL+"/1/markers/"+dataset, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var markers []Marker
-	if err := c.do(req, &markers); err != nil {
-		return nil, err
-	}
-	return markers, nil
+	return List[Marker](c, ctx, "/1/markers/"+dataset)
 }
 
 func (c *Client) CreateMarker(ctx context.Context, dataset string, m *Marker) (*Marker, error) {
-	body, err := json.Marshal(m)
-	if err != nil {
-		return nil, fmt.Errorf("encoding marker: %w", err)
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.BaseURL+"/1/markers/"+dataset, bytes.NewReader(body))
-	if err != nil {
-		return nil, err
-	}
-
-	var created Marker
-	if err := c.doJSON(req, &created); err != nil {
-		return nil, err
-	}
-	return &created, nil
+	return Create[Marker](c, ctx, "/1/markers/"+dataset, m)
 }
 
 func (c *Client) UpdateMarker(ctx context.Context, dataset string, id string, m *Marker) (*Marker, error) {
-	body, err := json.Marshal(m)
-	if err != nil {
-		return nil, fmt.Errorf("encoding marker: %w", err)
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPut, c.BaseURL+"/1/markers/"+dataset+"/"+id, bytes.NewReader(body))
-	if err != nil {
-		return nil, err
-	}
-
-	var updated Marker
-	if err := c.doJSON(req, &updated); err != nil {
-		return nil, err
-	}
-	return &updated, nil
+	return Update[Marker](c, ctx, "/1/markers/"+dataset+"/"+id, m)
 }
 
 func (c *Client) DeleteMarker(ctx context.Context, dataset string, id string) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, c.BaseURL+"/1/markers/"+dataset+"/"+id, nil)
-	if err != nil {
-		return err
-	}
-
-	return c.do(req, nil)
+	return Delete(c, ctx, "/1/markers/"+dataset+"/"+id)
 }

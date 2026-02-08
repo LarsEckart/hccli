@@ -1,12 +1,6 @@
 package api
 
-import (
-	"bytes"
-	"context"
-	"encoding/json"
-	"fmt"
-	"net/http"
-)
+import "context"
 
 type Query struct {
 	ID                string        `json:"id,omitempty"`
@@ -49,32 +43,9 @@ type Having struct {
 }
 
 func (c *Client) GetQuery(ctx context.Context, dataset string, queryID string) (*Query, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.BaseURL+"/1/queries/"+dataset+"/"+queryID, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var query Query
-	if err := c.do(req, &query); err != nil {
-		return nil, err
-	}
-	return &query, nil
+	return Get[Query](c, ctx, "/1/queries/"+dataset+"/"+queryID)
 }
 
 func (c *Client) CreateQuery(ctx context.Context, dataset string, query *Query) (*Query, error) {
-	body, err := json.Marshal(query)
-	if err != nil {
-		return nil, fmt.Errorf("encoding query: %w", err)
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.BaseURL+"/1/queries/"+dataset, bytes.NewReader(body))
-	if err != nil {
-		return nil, err
-	}
-
-	var created Query
-	if err := c.doJSON(req, &created); err != nil {
-		return nil, err
-	}
-	return &created, nil
+	return Create[Query](c, ctx, "/1/queries/"+dataset, query)
 }

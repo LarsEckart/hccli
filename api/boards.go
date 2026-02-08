@@ -1,12 +1,6 @@
 package api
 
-import (
-	"bytes"
-	"context"
-	"encoding/json"
-	"fmt"
-	"net/http"
-)
+import "context"
 
 type Board struct {
 	ID               string         `json:"id,omitempty"`
@@ -76,143 +70,41 @@ type BoardViewFilter struct {
 }
 
 func (c *Client) GetBoard(ctx context.Context, boardID string) (*Board, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.BaseURL+"/1/boards/"+boardID, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var board Board
-	if err := c.do(req, &board); err != nil {
-		return nil, err
-	}
-	return &board, nil
+	return Get[Board](c, ctx, "/1/boards/"+boardID)
 }
 
 func (c *Client) ListBoards(ctx context.Context) ([]Board, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.BaseURL+"/1/boards", nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var boards []Board
-	if err := c.do(req, &boards); err != nil {
-		return nil, err
-	}
-	return boards, nil
+	return List[Board](c, ctx, "/1/boards")
 }
 
 func (c *Client) DeleteBoard(ctx context.Context, boardID string) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, c.BaseURL+"/1/boards/"+boardID, nil)
-	if err != nil {
-		return err
-	}
-
-	return c.do(req, nil)
+	return Delete(c, ctx, "/1/boards/"+boardID)
 }
 
 func (c *Client) CreateBoard(ctx context.Context, board *Board) (*Board, error) {
-	body, err := json.Marshal(board)
-	if err != nil {
-		return nil, fmt.Errorf("encoding board: %w", err)
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.BaseURL+"/1/boards", bytes.NewReader(body))
-	if err != nil {
-		return nil, err
-	}
-
-	var created Board
-	if err := c.doJSON(req, &created); err != nil {
-		return nil, err
-	}
-	return &created, nil
+	return Create[Board](c, ctx, "/1/boards", board)
 }
 
 func (c *Client) UpdateBoard(ctx context.Context, boardID string, board *Board) (*Board, error) {
-	body, err := json.Marshal(board)
-	if err != nil {
-		return nil, fmt.Errorf("encoding board: %w", err)
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPut, c.BaseURL+"/1/boards/"+boardID, bytes.NewReader(body))
-	if err != nil {
-		return nil, err
-	}
-
-	var updated Board
-	if err := c.doJSON(req, &updated); err != nil {
-		return nil, err
-	}
-	return &updated, nil
+	return Update[Board](c, ctx, "/1/boards/"+boardID, board)
 }
 
 func (c *Client) ListBoardViews(ctx context.Context, boardID string) ([]BoardView, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.BaseURL+"/1/boards/"+boardID+"/views", nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var views []BoardView
-	if err := c.do(req, &views); err != nil {
-		return nil, err
-	}
-	return views, nil
+	return List[BoardView](c, ctx, "/1/boards/"+boardID+"/views")
 }
 
 func (c *Client) GetBoardView(ctx context.Context, boardID, viewID string) (*BoardView, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.BaseURL+"/1/boards/"+boardID+"/views/"+viewID, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var view BoardView
-	if err := c.do(req, &view); err != nil {
-		return nil, err
-	}
-	return &view, nil
+	return Get[BoardView](c, ctx, "/1/boards/"+boardID+"/views/"+viewID)
 }
 
 func (c *Client) CreateBoardView(ctx context.Context, boardID string, view *BoardView) (*BoardView, error) {
-	body, err := json.Marshal(view)
-	if err != nil {
-		return nil, fmt.Errorf("encoding board view: %w", err)
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.BaseURL+"/1/boards/"+boardID+"/views", bytes.NewReader(body))
-	if err != nil {
-		return nil, err
-	}
-
-	var created BoardView
-	if err := c.doJSON(req, &created); err != nil {
-		return nil, err
-	}
-	return &created, nil
+	return Create[BoardView](c, ctx, "/1/boards/"+boardID+"/views", view)
 }
 
 func (c *Client) UpdateBoardView(ctx context.Context, boardID, viewID string, view *BoardView) (*BoardView, error) {
-	body, err := json.Marshal(view)
-	if err != nil {
-		return nil, fmt.Errorf("encoding board view: %w", err)
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPut, c.BaseURL+"/1/boards/"+boardID+"/views/"+viewID, bytes.NewReader(body))
-	if err != nil {
-		return nil, err
-	}
-
-	var updated BoardView
-	if err := c.doJSON(req, &updated); err != nil {
-		return nil, err
-	}
-	return &updated, nil
+	return Update[BoardView](c, ctx, "/1/boards/"+boardID+"/views/"+viewID, view)
 }
 
 func (c *Client) DeleteBoardView(ctx context.Context, boardID, viewID string) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, c.BaseURL+"/1/boards/"+boardID+"/views/"+viewID, nil)
-	if err != nil {
-		return err
-	}
-
-	return c.do(req, nil)
+	return Delete(c, ctx, "/1/boards/"+boardID+"/views/"+viewID)
 }

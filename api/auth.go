@@ -37,16 +37,7 @@ type Team struct {
 }
 
 func (c *Client) GetAuth(ctx context.Context) (*AuthResponse, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.BaseURL+"/1/auth", nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var auth AuthResponse
-	if err := c.do(req, &auth); err != nil {
-		return nil, err
-	}
-	return &auth, nil
+	return Get[AuthResponse](c, ctx, "/1/auth")
 }
 
 type AuthV2Response struct {

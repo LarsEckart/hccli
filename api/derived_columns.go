@@ -1,12 +1,6 @@
 package api
 
-import (
-	"bytes"
-	"context"
-	"encoding/json"
-	"fmt"
-	"net/http"
-)
+import "context"
 
 type DerivedColumn struct {
 	ID          string `json:"id,omitempty"`
@@ -18,72 +12,21 @@ type DerivedColumn struct {
 }
 
 func (c *Client) ListDerivedColumns(ctx context.Context, dataset string) ([]DerivedColumn, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.BaseURL+"/1/derived_columns/"+dataset, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var cols []DerivedColumn
-	if err := c.do(req, &cols); err != nil {
-		return nil, err
-	}
-	return cols, nil
+	return List[DerivedColumn](c, ctx, "/1/derived_columns/"+dataset)
 }
 
 func (c *Client) GetDerivedColumn(ctx context.Context, dataset string, id string) (*DerivedColumn, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.BaseURL+"/1/derived_columns/"+dataset+"/"+id, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var col DerivedColumn
-	if err := c.do(req, &col); err != nil {
-		return nil, err
-	}
-	return &col, nil
+	return Get[DerivedColumn](c, ctx, "/1/derived_columns/"+dataset+"/"+id)
 }
 
 func (c *Client) CreateDerivedColumn(ctx context.Context, dataset string, col *DerivedColumn) (*DerivedColumn, error) {
-	body, err := json.Marshal(col)
-	if err != nil {
-		return nil, fmt.Errorf("encoding derived column: %w", err)
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.BaseURL+"/1/derived_columns/"+dataset, bytes.NewReader(body))
-	if err != nil {
-		return nil, err
-	}
-
-	var created DerivedColumn
-	if err := c.doJSON(req, &created); err != nil {
-		return nil, err
-	}
-	return &created, nil
+	return Create[DerivedColumn](c, ctx, "/1/derived_columns/"+dataset, col)
 }
 
 func (c *Client) UpdateDerivedColumn(ctx context.Context, dataset string, id string, col *DerivedColumn) (*DerivedColumn, error) {
-	body, err := json.Marshal(col)
-	if err != nil {
-		return nil, fmt.Errorf("encoding derived column: %w", err)
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPut, c.BaseURL+"/1/derived_columns/"+dataset+"/"+id, bytes.NewReader(body))
-	if err != nil {
-		return nil, err
-	}
-
-	var updated DerivedColumn
-	if err := c.doJSON(req, &updated); err != nil {
-		return nil, err
-	}
-	return &updated, nil
+	return Update[DerivedColumn](c, ctx, "/1/derived_columns/"+dataset+"/"+id, col)
 }
 
 func (c *Client) DeleteDerivedColumn(ctx context.Context, dataset string, id string) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, c.BaseURL+"/1/derived_columns/"+dataset+"/"+id, nil)
-	if err != nil {
-		return err
-	}
-
-	return c.do(req, nil)
+	return Delete(c, ctx, "/1/derived_columns/"+dataset+"/"+id)
 }
