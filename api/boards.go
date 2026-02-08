@@ -146,6 +146,32 @@ func (c *Client) UpdateBoard(ctx context.Context, boardID string, board *Board) 
 	return &updated, nil
 }
 
+func (c *Client) ListBoardViews(ctx context.Context, boardID string) ([]BoardView, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.BaseURL+"/1/boards/"+boardID+"/views", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var views []BoardView
+	if err := c.do(req, &views); err != nil {
+		return nil, err
+	}
+	return views, nil
+}
+
+func (c *Client) GetBoardView(ctx context.Context, boardID, viewID string) (*BoardView, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.BaseURL+"/1/boards/"+boardID+"/views/"+viewID, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var view BoardView
+	if err := c.do(req, &view); err != nil {
+		return nil, err
+	}
+	return &view, nil
+}
+
 func (c *Client) CreateBoardView(ctx context.Context, boardID string, view *BoardView) (*BoardView, error) {
 	body, err := json.Marshal(view)
 	if err != nil {
@@ -162,4 +188,31 @@ func (c *Client) CreateBoardView(ctx context.Context, boardID string, view *Boar
 		return nil, err
 	}
 	return &created, nil
+}
+
+func (c *Client) UpdateBoardView(ctx context.Context, boardID, viewID string, view *BoardView) (*BoardView, error) {
+	body, err := json.Marshal(view)
+	if err != nil {
+		return nil, fmt.Errorf("encoding board view: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, c.BaseURL+"/1/boards/"+boardID+"/views/"+viewID, bytes.NewReader(body))
+	if err != nil {
+		return nil, err
+	}
+
+	var updated BoardView
+	if err := c.doJSON(req, &updated); err != nil {
+		return nil, err
+	}
+	return &updated, nil
+}
+
+func (c *Client) DeleteBoardView(ctx context.Context, boardID, viewID string) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, c.BaseURL+"/1/boards/"+boardID+"/views/"+viewID, nil)
+	if err != nil {
+		return err
+	}
+
+	return c.do(req, nil)
 }

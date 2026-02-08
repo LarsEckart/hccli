@@ -30,7 +30,11 @@ func main() {
 			createBoardCmd(),
 			updateBoardCmd(),
 			deleteBoardCmd(),
+			listBoardViewsCmd(),
+			getBoardViewCmd(),
 			createBoardViewCmd(),
+			updateBoardViewCmd(),
+			deleteBoardViewCmd(),
 			getQueryCmd(),
 			createQueryCmd(),
 			createQueryAnnotationCmd(),
@@ -236,6 +240,63 @@ func deleteBoardCmd() *cli.Command {
 	}
 }
 
+func listBoardViewsCmd() *cli.Command {
+	return &cli.Command{
+		Name:  "board-views",
+		Usage: "List all views for a board",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:     "board-id",
+				Usage:    "Board ID",
+				Required: true,
+			},
+		},
+		Action: func(ctx context.Context, cmd *cli.Command) error {
+			client := newClient(cmd)
+
+			views, err := client.ListBoardViews(ctx, cmd.String("board-id"))
+			if err != nil {
+				return err
+			}
+
+			enc := json.NewEncoder(os.Stdout)
+			enc.SetIndent("", "  ")
+			return enc.Encode(views)
+		},
+	}
+}
+
+func getBoardViewCmd() *cli.Command {
+	return &cli.Command{
+		Name:  "get-board-view",
+		Usage: "Get a board view by ID",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:     "board-id",
+				Usage:    "Board ID",
+				Required: true,
+			},
+			&cli.StringFlag{
+				Name:     "view-id",
+				Usage:    "View ID",
+				Required: true,
+			},
+		},
+		Action: func(ctx context.Context, cmd *cli.Command) error {
+			client := newClient(cmd)
+
+			view, err := client.GetBoardView(ctx, cmd.String("board-id"), cmd.String("view-id"))
+			if err != nil {
+				return err
+			}
+
+			enc := json.NewEncoder(os.Stdout)
+			enc.SetIndent("", "  ")
+			return enc.Encode(view)
+		},
+	}
+}
+
 func createBoardViewCmd() *cli.Command {
 	return &cli.Command{
 		Name:  "create-board-view",
@@ -290,6 +351,92 @@ func createBoardViewCmd() *cli.Command {
 			enc := json.NewEncoder(os.Stdout)
 			enc.SetIndent("", "  ")
 			return enc.Encode(created)
+		},
+	}
+}
+
+func updateBoardViewCmd() *cli.Command {
+	return &cli.Command{
+		Name:  "update-board-view",
+		Usage: "Update a board view by ID",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:     "board-id",
+				Usage:    "Board ID",
+				Required: true,
+			},
+			&cli.StringFlag{
+				Name:     "view-id",
+				Usage:    "View ID",
+				Required: true,
+			},
+			&cli.StringFlag{
+				Name:     "name",
+				Usage:    "View name",
+				Required: true,
+			},
+			&cli.StringFlag{
+				Name:     "filter-column",
+				Usage:    "Filter column name",
+				Required: true,
+			},
+			&cli.StringFlag{
+				Name:     "filter-op",
+				Usage:    "Filter operation (e.g. =, !=, >, <, starts-with)",
+				Required: true,
+			},
+			&cli.StringFlag{
+				Name:  "filter-value",
+				Usage: "Filter value",
+			},
+		},
+		Action: func(ctx context.Context, cmd *cli.Command) error {
+			client := newClient(cmd)
+
+			filter := api.BoardViewFilter{
+				Column:    cmd.String("filter-column"),
+				Operation: cmd.String("filter-op"),
+			}
+			if v := cmd.String("filter-value"); v != "" {
+				filter.Value = v
+			}
+
+			view := &api.BoardView{
+				Name:    cmd.String("name"),
+				Filters: []api.BoardViewFilter{filter},
+			}
+
+			updated, err := client.UpdateBoardView(ctx, cmd.String("board-id"), cmd.String("view-id"), view)
+			if err != nil {
+				return err
+			}
+
+			enc := json.NewEncoder(os.Stdout)
+			enc.SetIndent("", "  ")
+			return enc.Encode(updated)
+		},
+	}
+}
+
+func deleteBoardViewCmd() *cli.Command {
+	return &cli.Command{
+		Name:  "delete-board-view",
+		Usage: "Delete a board view by ID",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:     "board-id",
+				Usage:    "Board ID",
+				Required: true,
+			},
+			&cli.StringFlag{
+				Name:     "view-id",
+				Usage:    "View ID",
+				Required: true,
+			},
+		},
+		Action: func(ctx context.Context, cmd *cli.Command) error {
+			client := newClient(cmd)
+			return client.DeleteBoardView(ctx, cmd.String("board-id"), cmd.String("view-id"))
 		},
 	}
 }
