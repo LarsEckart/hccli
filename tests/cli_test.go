@@ -20,7 +20,7 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 	binaryPath = filepath.Join(dir, "hccli")
-	build := exec.CommandContext(context.Background(), "go", "build", "-o", binaryPath, ".")
+	build := exec.CommandContext(context.Background(), "go", "build", "-o", binaryPath, "..")
 	build.Stderr = os.Stderr
 	if err := build.Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "failed to build binary: %v\n", err)
