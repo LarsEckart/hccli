@@ -13,7 +13,16 @@ import (
 func main() {
 	app := &cli.Command{
 		Name:  "hccli",
-		Usage: "Honeycomb API CLI",
+		Usage: "A machine-friendly CLI for the Honeycomb observability platform",
+		Description: `Interact with Honeycomb from the command line — ideal for scripting,
+automation, and integration with CI/CD pipelines.
+
+Authentication:
+  Provide your API key via --api-key flag or HONEYCOMB_API_KEY environment variable.
+
+Output:
+  All commands output JSON with 2-space indentation, making them easy to parse
+  and pipe into tools like jq for further processing.`,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "api-key",
@@ -80,8 +89,9 @@ func newClient(cmd *cli.Command) *api.Client {
 
 func authV2Cmd() *cli.Command {
 	return &cli.Command{
-		Name:  "auth-v2",
-		Usage: "Show management API key info and permissions (v2)",
+		Name:     "auth-v2",
+		Category: "Auth",
+		Usage:    "Show management API key info and permissions (v2)",
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			client := newClient(cmd)
 
@@ -99,8 +109,9 @@ func authV2Cmd() *cli.Command {
 
 func listBoardsCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "boards",
-		Usage: "List all boards",
+		Name:     "boards",
+		Category: "Boards",
+		Usage:    "List all boards",
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			client := newClient(cmd)
 
@@ -118,8 +129,9 @@ func listBoardsCmd() *cli.Command {
 
 func getBoardCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "get-board",
-		Usage: "Get a board by ID",
+		Name:     "get-board",
+		Category: "Boards",
+		Usage:    "Get a board by ID",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "id",
@@ -144,8 +156,9 @@ func getBoardCmd() *cli.Command {
 
 func createBoardCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "create-board",
-		Usage: "Create a new board",
+		Name:     "create-board",
+		Category: "Boards",
+		Usage:    "Create a new board",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "name",
@@ -180,8 +193,9 @@ func createBoardCmd() *cli.Command {
 
 func updateBoardCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "update-board",
-		Usage: "Update a board by ID",
+		Name:     "update-board",
+		Category: "Boards",
+		Usage:    "Update a board by ID",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "id",
@@ -251,8 +265,9 @@ func updateBoardCmd() *cli.Command {
 
 func deleteBoardCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "delete-board",
-		Usage: "Delete a board by ID",
+		Name:     "delete-board",
+		Category: "Boards",
+		Usage:    "Delete a board by ID",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "id",
@@ -269,8 +284,9 @@ func deleteBoardCmd() *cli.Command {
 
 func listBoardViewsCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "board-views",
-		Usage: "List all views for a board",
+		Name:     "board-views",
+		Category: "Board Views",
+		Usage:    "List all views for a board",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "board-id",
@@ -295,8 +311,9 @@ func listBoardViewsCmd() *cli.Command {
 
 func getBoardViewCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "get-board-view",
-		Usage: "Get a board view by ID",
+		Name:     "get-board-view",
+		Category: "Board Views",
+		Usage:    "Get a board view by ID",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "board-id",
@@ -326,8 +343,9 @@ func getBoardViewCmd() *cli.Command {
 
 func createBoardViewCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "create-board-view",
-		Usage: "Create a new view for a board",
+		Name:     "create-board-view",
+		Category: "Board Views",
+		Usage:    "Create a new view for a board",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "board-id",
@@ -384,8 +402,9 @@ func createBoardViewCmd() *cli.Command {
 
 func updateBoardViewCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "update-board-view",
-		Usage: "Update a board view by ID",
+		Name:     "update-board-view",
+		Category: "Board Views",
+		Usage:    "Update a board view by ID",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "board-id",
@@ -447,8 +466,9 @@ func updateBoardViewCmd() *cli.Command {
 
 func deleteBoardViewCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "delete-board-view",
-		Usage: "Delete a board view by ID",
+		Name:     "delete-board-view",
+		Category: "Board Views",
+		Usage:    "Delete a board view by ID",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "board-id",
@@ -470,8 +490,9 @@ func deleteBoardViewCmd() *cli.Command {
 
 func getQueryCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "get-query",
-		Usage: "Get a query by ID",
+		Name:     "get-query",
+		Category: "Queries",
+		Usage:    "Get a query by ID",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "dataset",
@@ -501,8 +522,9 @@ func getQueryCmd() *cli.Command {
 
 func createQueryCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "create-query",
-		Usage: "Create a new query",
+		Name:     "create-query",
+		Category: "Queries",
+		Usage:    "Create a new query",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "dataset",
@@ -586,8 +608,9 @@ func createQueryCmd() *cli.Command {
 
 func createQueryAnnotationCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "create-query-annotation",
-		Usage: "Create a query annotation",
+		Name:     "create-query-annotation",
+		Category: "Query Annotations",
+		Usage:    "Create a query annotation",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "dataset",
@@ -634,8 +657,9 @@ func createQueryAnnotationCmd() *cli.Command {
 
 func listQueryAnnotationsCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "query-annotations",
-		Usage: "List all query annotations",
+		Name:     "query-annotations",
+		Category: "Query Annotations",
+		Usage:    "List all query annotations",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "dataset",
@@ -660,8 +684,9 @@ func listQueryAnnotationsCmd() *cli.Command {
 
 func getQueryAnnotationCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "get-query-annotation",
-		Usage: "Get a query annotation by ID",
+		Name:     "get-query-annotation",
+		Category: "Query Annotations",
+		Usage:    "Get a query annotation by ID",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "dataset",
@@ -691,8 +716,9 @@ func getQueryAnnotationCmd() *cli.Command {
 
 func updateQueryAnnotationCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "update-query-annotation",
-		Usage: "Update a query annotation by ID",
+		Name:     "update-query-annotation",
+		Category: "Query Annotations",
+		Usage:    "Update a query annotation by ID",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "dataset",
@@ -744,8 +770,9 @@ func updateQueryAnnotationCmd() *cli.Command {
 
 func deleteQueryAnnotationCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "delete-query-annotation",
-		Usage: "Delete a query annotation by ID",
+		Name:     "delete-query-annotation",
+		Category: "Query Annotations",
+		Usage:    "Delete a query annotation by ID",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "dataset",
@@ -767,8 +794,9 @@ func deleteQueryAnnotationCmd() *cli.Command {
 
 func listColumnsCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "columns",
-		Usage: "List all columns",
+		Name:     "columns",
+		Category: "Columns",
+		Usage:    "List all columns",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "dataset",
@@ -793,8 +821,9 @@ func listColumnsCmd() *cli.Command {
 
 func getColumnCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "get-column",
-		Usage: "Get a column by ID",
+		Name:     "get-column",
+		Category: "Columns",
+		Usage:    "Get a column by ID",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "dataset",
@@ -824,8 +853,9 @@ func getColumnCmd() *cli.Command {
 
 func createColumnCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "create-column",
-		Usage: "Create a new column",
+		Name:     "create-column",
+		Category: "Columns",
+		Usage:    "Create a new column",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "dataset",
@@ -878,8 +908,9 @@ func createColumnCmd() *cli.Command {
 
 func updateColumnCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "update-column",
-		Usage: "Update a column by ID",
+		Name:     "update-column",
+		Category: "Columns",
+		Usage:    "Update a column by ID",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "dataset",
@@ -933,8 +964,9 @@ func updateColumnCmd() *cli.Command {
 
 func deleteColumnCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "delete-column",
-		Usage: "Delete a column by ID",
+		Name:     "delete-column",
+		Category: "Columns",
+		Usage:    "Delete a column by ID",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "dataset",
@@ -956,8 +988,9 @@ func deleteColumnCmd() *cli.Command {
 
 func listDerivedColumnsCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "derived-columns",
-		Usage: "List all calculated fields (derived columns)",
+		Name:     "derived-columns",
+		Category: "Derived Columns",
+		Usage:    "List all calculated fields (derived columns)",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "dataset",
@@ -982,8 +1015,9 @@ func listDerivedColumnsCmd() *cli.Command {
 
 func getDerivedColumnCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "get-derived-column",
-		Usage: "Get a calculated field (derived column) by ID",
+		Name:     "get-derived-column",
+		Category: "Derived Columns",
+		Usage:    "Get a calculated field (derived column) by ID",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "dataset",
@@ -1013,8 +1047,9 @@ func getDerivedColumnCmd() *cli.Command {
 
 func createDerivedColumnCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "create-derived-column",
-		Usage: "Create a new calculated field (derived column)",
+		Name:     "create-derived-column",
+		Category: "Derived Columns",
+		Usage:    "Create a new calculated field (derived column)",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "dataset",
@@ -1061,8 +1096,9 @@ func createDerivedColumnCmd() *cli.Command {
 
 func updateDerivedColumnCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "update-derived-column",
-		Usage: "Update a calculated field (derived column) by ID",
+		Name:     "update-derived-column",
+		Category: "Derived Columns",
+		Usage:    "Update a calculated field (derived column) by ID",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "dataset",
@@ -1114,8 +1150,9 @@ func updateDerivedColumnCmd() *cli.Command {
 
 func deleteDerivedColumnCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "delete-derived-column",
-		Usage: "Delete a calculated field (derived column) by ID",
+		Name:     "delete-derived-column",
+		Category: "Derived Columns",
+		Usage:    "Delete a calculated field (derived column) by ID",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "dataset",
@@ -1137,8 +1174,9 @@ func deleteDerivedColumnCmd() *cli.Command {
 
 func listDatasetsCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "datasets",
-		Usage: "List all datasets",
+		Name:     "datasets",
+		Category: "Datasets",
+		Usage:    "List all datasets",
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			client := newClient(cmd)
 
@@ -1156,8 +1194,9 @@ func listDatasetsCmd() *cli.Command {
 
 func getDatasetCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "get-dataset",
-		Usage: "Get a dataset by slug",
+		Name:     "get-dataset",
+		Category: "Datasets",
+		Usage:    "Get a dataset by slug",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "slug",
@@ -1182,8 +1221,9 @@ func getDatasetCmd() *cli.Command {
 
 func createDatasetCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "create-dataset",
-		Usage: "Create a new dataset",
+		Name:     "create-dataset",
+		Category: "Datasets",
+		Usage:    "Create a new dataset",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "name",
@@ -1227,8 +1267,9 @@ func createDatasetCmd() *cli.Command {
 
 func updateDatasetCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "update-dataset",
-		Usage: "Update a dataset by slug",
+		Name:     "update-dataset",
+		Category: "Datasets",
+		Usage:    "Update a dataset by slug",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "slug",
@@ -1279,8 +1320,9 @@ func updateDatasetCmd() *cli.Command {
 
 func deleteDatasetCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "delete-dataset",
-		Usage: "Delete a dataset by slug",
+		Name:     "delete-dataset",
+		Category: "Datasets",
+		Usage:    "Delete a dataset by slug",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "slug",
@@ -1297,8 +1339,9 @@ func deleteDatasetCmd() *cli.Command {
 
 func listMarkerSettingsCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "marker-settings",
-		Usage: "List all marker settings for a dataset",
+		Name:     "marker-settings",
+		Category: "Marker Settings",
+		Usage:    "List all marker settings for a dataset",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "dataset",
@@ -1323,8 +1366,9 @@ func listMarkerSettingsCmd() *cli.Command {
 
 func createMarkerSettingCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "create-marker-setting",
-		Usage: "Create a marker setting in a dataset",
+		Name:     "create-marker-setting",
+		Category: "Marker Settings",
+		Usage:    "Create a marker setting in a dataset",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "dataset",
@@ -1364,8 +1408,9 @@ func createMarkerSettingCmd() *cli.Command {
 
 func updateMarkerSettingCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "update-marker-setting",
-		Usage: "Update a marker setting by ID",
+		Name:     "update-marker-setting",
+		Category: "Marker Settings",
+		Usage:    "Update a marker setting by ID",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "dataset",
@@ -1410,8 +1455,9 @@ func updateMarkerSettingCmd() *cli.Command {
 
 func deleteMarkerSettingCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "delete-marker-setting",
-		Usage: "Delete a marker setting by ID",
+		Name:     "delete-marker-setting",
+		Category: "Marker Settings",
+		Usage:    "Delete a marker setting by ID",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "dataset",
@@ -1433,8 +1479,9 @@ func deleteMarkerSettingCmd() *cli.Command {
 
 func listMarkersCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "markers",
-		Usage: "List all markers for a dataset",
+		Name:     "markers",
+		Category: "Markers",
+		Usage:    "List all markers for a dataset",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "dataset",
@@ -1459,8 +1506,9 @@ func listMarkersCmd() *cli.Command {
 
 func createMarkerCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "create-marker",
-		Usage: "Create a marker in a dataset",
+		Name:     "create-marker",
+		Category: "Markers",
+		Usage:    "Create a marker in a dataset",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "dataset",
@@ -1519,8 +1567,9 @@ func createMarkerCmd() *cli.Command {
 
 func updateMarkerCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "update-marker",
-		Usage: "Update a marker by ID",
+		Name:     "update-marker",
+		Category: "Markers",
+		Usage:    "Update a marker by ID",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "dataset",
@@ -1584,8 +1633,9 @@ func updateMarkerCmd() *cli.Command {
 
 func deleteMarkerCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "delete-marker",
-		Usage: "Delete a marker by ID",
+		Name:     "delete-marker",
+		Category: "Markers",
+		Usage:    "Delete a marker by ID",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "dataset",
@@ -1607,8 +1657,9 @@ func deleteMarkerCmd() *cli.Command {
 
 func authCmd() *cli.Command {
 	return &cli.Command{
-		Name:  "auth",
-		Usage: "Show API key info and permissions",
+		Name:     "auth",
+		Category: "Auth",
+		Usage:    "Show API key info and permissions",
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			client := newClient(cmd)
 
