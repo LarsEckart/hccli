@@ -1,6 +1,7 @@
 package main_test
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -19,7 +20,7 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 	binaryPath = filepath.Join(dir, "hccli")
-	build := exec.Command("go", "build", "-o", binaryPath, ".")
+	build := exec.CommandContext(context.Background(), "go", "build", "-o", binaryPath, ".")
 	build.Stderr = os.Stderr
 	if err := build.Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "failed to build binary: %v\n", err)
@@ -32,7 +33,7 @@ func TestMain(m *testing.M) {
 
 func runCLI(t *testing.T, args ...string) (string, string, int) {
 	t.Helper()
-	cmd := exec.Command(binaryPath, args...)
+	cmd := exec.CommandContext(t.Context(), binaryPath, args...)
 	var stdout, stderr strings.Builder
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -86,7 +87,7 @@ func parseJSONArray(t *testing.T, s string) []any {
 }
 
 func TestMissingAPIKeyShowsError(t *testing.T) {
-	cmd := exec.Command(binaryPath, "auth")
+	cmd := exec.CommandContext(t.Context(), binaryPath, "auth")
 	cmd.Env = filterEnv("HONEYCOMB_API_KEY")
 	out, err := cmd.CombinedOutput()
 	if err == nil {
