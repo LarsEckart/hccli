@@ -7,6 +7,9 @@ import (
 )
 
 func TestDatasetCRUDCLI_Smoke(t *testing.T) {
+	if os.Getenv("RUN_DATASET_TESTS") != "1" {
+		t.Skip("set RUN_DATASET_TESTS=1 to run dataset integration tests")
+	}
 	_ = requireDataset(t)
 
 	name := fmt.Sprintf("hccli-test-%d", time.Now().UnixNano())
