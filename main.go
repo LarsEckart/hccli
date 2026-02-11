@@ -45,6 +45,8 @@ Output:
 			cmd.DeleteBoardViewCmd(),
 			cmd.GetQueryCmd(),
 			cmd.CreateQueryCmd(),
+			cmd.CreateQueryResultCmd(),
+			cmd.GetQueryResultCmd(),
 			cmd.CreateQueryAnnotationCmd(),
 			cmd.ListQueryAnnotationsCmd(),
 			cmd.GetQueryAnnotationCmd(),
