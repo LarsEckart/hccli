@@ -80,6 +80,11 @@ Output:
 			cmd.CreateSLOCmd(),
 			cmd.UpdateSLOCmd(),
 			cmd.DeleteSLOCmd(),
+			cmd.ListBurnAlertsCmd(),
+			cmd.GetBurnAlertCmd(),
+			cmd.CreateBurnAlertCmd(),
+			cmd.UpdateBurnAlertCmd(),
+			cmd.DeleteBurnAlertCmd(),
 		},
 	}
 
