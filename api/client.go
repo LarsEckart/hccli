@@ -52,17 +52,16 @@ func (c *Client) doRequest(req *http.Request, out any) error {
 	}
 	defer func() { _ = resp.Body.Close() }()
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("reading response: %w", err)
-	}
-
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("API error (HTTP %d): (unreadable body)", resp.StatusCode)
+		}
 		return fmt.Errorf("API error (HTTP %d): %s", resp.StatusCode, string(body))
 	}
 
 	if out != nil {
-		if err := json.Unmarshal(body, out); err != nil {
+		if err := json.NewDecoder(resp.Body).Decode(out); err != nil {
 			return fmt.Errorf("decoding response: %w", err)
 		}
 	}
