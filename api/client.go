@@ -7,9 +7,13 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 )
 
 const defaultBaseURL = "https://api.honeycomb.io"
+
+// DefaultTimeout is the default HTTP client timeout.
+const DefaultTimeout = 30 * time.Second
 
 type Client struct {
 	APIKey  string
@@ -17,11 +21,11 @@ type Client struct {
 	HTTP    *http.Client
 }
 
-func NewClient(apiKey string) *Client {
+func NewClient(apiKey string, timeout time.Duration) *Client {
 	return &Client{
 		APIKey:  apiKey,
 		BaseURL: defaultBaseURL,
-		HTTP:    http.DefaultClient,
+		HTTP:    &http.Client{Timeout: timeout},
 	}
 }
 

@@ -1,12 +1,19 @@
 package cmd
 
 import (
+	"time"
+
 	"github.com/LarsEckart/hccli/api"
 	"github.com/urfave/cli/v3"
 )
 
 func newClient(cmd *cli.Command) *api.Client {
-	return api.NewClient(cmd.String("api-key"))
+	timeout := time.Duration(cmd.Int("timeout")) * time.Second
+	client := api.NewClient(cmd.String("api-key"), timeout)
+	if url := cmd.String("api-url"); url != "" {
+		client.BaseURL = url
+	}
+	return client
 }
 
 // IDFlag returns a standard ID flag.

@@ -29,6 +29,19 @@ Output:
 				Usage:    "Honeycomb API key",
 				Required: true,
 			},
+			&cli.IntFlag{
+				Name:        "timeout",
+				Usage:       "HTTP request timeout in seconds",
+				Value:       30,
+				DefaultText: "30",
+				Sources:     cli.EnvVars("HONEYCOMB_TIMEOUT"),
+			},
+			&cli.StringFlag{
+				Name:    "api-url",
+				Usage:   "Honeycomb API base URL",
+				Value:   "https://api.honeycomb.io",
+				Sources: cli.EnvVars("HONEYCOMB_API_URL"),
+			},
 		},
 		Commands: []*cli.Command{
 			cmd.AuthCmd(),
