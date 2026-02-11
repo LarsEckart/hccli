@@ -75,6 +75,11 @@ Output:
 			cmd.CreateMarkerSettingCmd(),
 			cmd.UpdateMarkerSettingCmd(),
 			cmd.DeleteMarkerSettingCmd(),
+			cmd.ListSLOsCmd(),
+			cmd.GetSLOCmd(),
+			cmd.CreateSLOCmd(),
+			cmd.UpdateSLOCmd(),
+			cmd.DeleteSLOCmd(),
 		},
 	}
 
