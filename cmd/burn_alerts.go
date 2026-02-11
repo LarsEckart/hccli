@@ -140,9 +140,9 @@ func UpdateBurnAlertCmd() *cli.Command {
 			DatasetFlag(),
 			IDFlag("id", "Burn Alert ID"),
 			&cli.StringFlag{
-				Name:  "alert-type",
-				Usage: "Alert type: exhaustion_time or budget_rate",
-				Value: "exhaustion_time",
+				Name:     "alert-type",
+				Usage:    "Alert type: exhaustion_time or budget_rate",
+				Required: true,
 			},
 			&cli.StringFlag{
 				Name:  "description",
