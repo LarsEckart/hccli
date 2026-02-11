@@ -42,6 +42,10 @@ func CreateQueryResultCmd() *cli.Command {
 			pollInterval := time.Duration(cmd.Int("poll-interval")) * time.Second
 			timeout := time.Duration(cmd.Int("timeout")) * time.Second
 
+			if pollInterval < 1*time.Second {
+				pollInterval = 1 * time.Second
+			}
+
 			result, err := client.CreateQueryResult(ctx, dataset, queryID)
 			if err != nil {
 				return err
@@ -56,7 +60,12 @@ func CreateQueryResultCmd() *cli.Command {
 				if time.Now().After(deadline) {
 					return fmt.Errorf("timed out waiting for query result %s after %s", result.ID, timeout)
 				}
-				time.Sleep(pollInterval)
+
+				select {
+				case <-ctx.Done():
+					return ctx.Err()
+				case <-time.After(pollInterval):
+				}
 
 				result, err = client.GetQueryResult(ctx, dataset, result.ID)
 				if err != nil {
