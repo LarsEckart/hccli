@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/LarsEckart/hccli/api"
 	"github.com/urfave/cli/v3"
@@ -48,14 +49,14 @@ func CreateQueryCmd() *cli.Command {
 				Usage:    "Dataset slug",
 				Required: true,
 			},
-			&cli.StringFlag{
+			&cli.StringSliceFlag{
 				Name:     "calculation-op",
-				Usage:    "Calculation operation (e.g. COUNT, AVG, P99)",
+				Usage:    "Calculation operation (e.g. COUNT, AVG, P99); repeat for multiple calculations",
 				Required: true,
 			},
-			&cli.StringFlag{
+			&cli.StringSliceFlag{
 				Name:  "calculation-column",
-				Usage: "Calculation column (not needed for COUNT)",
+				Usage: "Calculation column (use empty string for COUNT); repeat to match each --calculation-op",
 			},
 			&cli.StringFlag{
 				Name:  "breakdown",
@@ -81,15 +82,24 @@ func CreateQueryCmd() *cli.Command {
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			client := newClient(cmd)
 
-			calc := api.Calculation{
-				Op: cmd.String("calculation-op"),
+			ops := cmd.StringSlice("calculation-op")
+			cols := cmd.StringSlice("calculation-column")
+
+			if len(cols) > 0 && len(cols) != len(ops) {
+				return fmt.Errorf("number of --calculation-column values (%d) must match --calculation-op values (%d)", len(cols), len(ops))
 			}
-			if v := cmd.String("calculation-column"); v != "" {
-				calc.Column = v
+
+			var calcs []api.Calculation
+			for i, op := range ops {
+				c := api.Calculation{Op: op}
+				if i < len(cols) && cols[i] != "" {
+					c.Column = cols[i]
+				}
+				calcs = append(calcs, c)
 			}
 
 			query := &api.Query{
-				Calculations: []api.Calculation{calc},
+				Calculations: calcs,
 			}
 
 			if v := cmd.String("breakdown"); v != "" {
