@@ -3,8 +3,10 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
+	"github.com/LarsEckart/hccli/api"
 	"github.com/urfave/cli/v3"
 )
 
@@ -52,6 +54,7 @@ func CreateQueryResultCmd() *cli.Command {
 			}
 
 			if result.Complete {
+				warnIfEmptyResults(result, dataset)
 				return printJSON(result)
 			}
 
@@ -73,9 +76,25 @@ func CreateQueryResultCmd() *cli.Command {
 				}
 			}
 
+			warnIfEmptyResults(result, dataset)
 			return printJSON(result)
 		},
 	}
+}
+
+func warnIfEmptyResults(result *api.QueryResult, dataset string) {
+	if len(result.Data.Results) > 0 {
+		return
+	}
+	fmt.Fprintln(os.Stderr, "⚠️  Query returned 0 results")
+	fmt.Fprintln(os.Stderr, "")
+	fmt.Fprintln(os.Stderr, "💡 Possible reasons:")
+	fmt.Fprintln(os.Stderr, "  • No data in time range (try a larger --time-range)")
+	fmt.Fprintln(os.Stderr, "  • Filters are too restrictive")
+	fmt.Fprintf(os.Stderr, "  • Column names don't exist (verify with: hccli columns --dataset %s)\n", dataset)
+	fmt.Fprintln(os.Stderr, "")
+	fmt.Fprintln(os.Stderr, "💡 Results with breakdowns are nested under .data.results[].data")
+	fmt.Fprintln(os.Stderr, "   Try: jq '.data.results[].data'")
 }
 
 func GetQueryResultCmd() *cli.Command {
