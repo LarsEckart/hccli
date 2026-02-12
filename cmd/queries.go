@@ -94,9 +94,9 @@ func CreateQueryCmd() *cli.Command {
 				Name:  "calculation-column",
 				Usage: "Calculation column (use empty string for COUNT); repeat to match each --calculation-op",
 			},
-			&cli.StringFlag{
+			&cli.StringSliceFlag{
 				Name:  "breakdown",
-				Usage: "Breakdown column",
+				Usage: "Breakdown column; repeat for multiple dimensions",
 			},
 			&cli.StringSliceFlag{
 				Name:  "filter",
@@ -134,8 +134,8 @@ func CreateQueryCmd() *cli.Command {
 				Calculations: calcs,
 			}
 
-			if v := cmd.String("breakdown"); v != "" {
-				query.Breakdowns = []string{v}
+			if v := cmd.StringSlice("breakdown"); len(v) > 0 {
+				query.Breakdowns = v
 			}
 
 			for _, raw := range cmd.StringSlice("filter") {

@@ -111,6 +111,34 @@ func TestCreateQueryMultipleFiltersCLI_Smoke(t *testing.T) {
 	}
 }
 
+func TestCreateQueryMultipleBreakdownsCLI_Smoke(t *testing.T) {
+	dataset := requireDataset(t)
+
+	stdout, stderr, exitCode := runCLIWithKey(t,
+		"create-query",
+		"--dataset", dataset,
+		"--calculation-op", "COUNT",
+		"--breakdown", "service.name",
+		"--breakdown", "service.instance.id",
+		"--time-range", "7200",
+	)
+	if exitCode != 0 {
+		t.Fatalf("create-query with multiple breakdowns failed with exit code %d: %s", exitCode, stderr)
+	}
+
+	query := parseJSON(t, stdout)
+	breakdowns, ok := query["breakdowns"].([]any)
+	if !ok || len(breakdowns) != 2 {
+		t.Fatalf("expected 2 breakdowns, got %v", query["breakdowns"])
+	}
+	if breakdowns[0] != "service.name" {
+		t.Errorf("expected first breakdown 'service.name', got %v", breakdowns[0])
+	}
+	if breakdowns[1] != "service.instance.id" {
+		t.Errorf("expected second breakdown 'service.instance.id', got %v", breakdowns[1])
+	}
+}
+
 func TestCreateQueryInvalidFilterCLI(t *testing.T) {
 	_, stderr, exitCode := runCLI(t,
 		"--api-key", "fake-key",
