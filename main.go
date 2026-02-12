@@ -98,6 +98,7 @@ Output:
 			cmd.CreateBurnAlertCmd(),
 			cmd.UpdateBurnAlertCmd(),
 			cmd.DeleteBurnAlertCmd(),
+			cmd.GetTraceCmd(),
 		},
 	}
 
