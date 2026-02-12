@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/LarsEckart/hccli/api"
+	"github.com/LarsEckart/hccli/timefmt"
 	"github.com/urfave/cli/v3"
 )
 
@@ -106,9 +108,21 @@ func CreateQueryCmd() *cli.Command {
 				Name:  "filter-combination",
 				Usage: "How to combine filters: AND (default) or OR",
 			},
-			&cli.IntFlag{
+			&cli.StringFlag{
 				Name:  "time-range",
-				Usage: "Time range in seconds",
+				Usage: `Time range (e.g. 3600, "4 hours", "last week")`,
+			},
+			&cli.StringFlag{
+				Name:  "from",
+				Usage: `Start time (e.g. "2024-02-11 18:00", "2024-02-11T18:00:00Z")`,
+			},
+			&cli.StringFlag{
+				Name:  "to",
+				Usage: `End time (e.g. "2024-02-11 18:45", "2024-02-11T18:00:00Z")`,
+			},
+			&cli.StringFlag{
+				Name:  "timezone",
+				Usage: `Timezone for parsing dates (e.g. "America/New_York", default UTC)`,
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
@@ -150,8 +164,37 @@ func CreateQueryCmd() *cli.Command {
 				query.FilterCombination = v
 			}
 
-			if v := cmd.Int("time-range"); v != 0 {
-				query.TimeRange = int(v)
+			loc := time.UTC
+			if tz := cmd.String("timezone"); tz != "" {
+				var err error
+				loc, err = time.LoadLocation(tz)
+				if err != nil {
+					return fmt.Errorf("invalid timezone %q: %w", tz, err)
+				}
+			}
+
+			if v := cmd.String("time-range"); v != "" {
+				tr, err := timefmt.ParseTimeRange(v)
+				if err != nil {
+					return fmt.Errorf("invalid time-range %q: %w", v, err)
+				}
+				query.TimeRange = tr
+			}
+
+			if v := cmd.String("from"); v != "" {
+				ts, err := timefmt.ParseTimestamp(v, loc)
+				if err != nil {
+					return fmt.Errorf("invalid from time %q: %w", v, err)
+				}
+				query.StartTime = int(ts)
+			}
+
+			if v := cmd.String("to"); v != "" {
+				ts, err := timefmt.ParseTimestamp(v, loc)
+				if err != nil {
+					return fmt.Errorf("invalid to time %q: %w", v, err)
+				}
+				query.EndTime = int(ts)
 			}
 
 			created, err := client.CreateQuery(ctx, cmd.String("dataset"), query)
