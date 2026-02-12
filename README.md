@@ -28,3 +28,18 @@ hccli auth
 ## Commands
 
 Run `hccli --help` for full command reference.
+
+## Large Output
+
+When JSON output exceeds 30KB, hccli writes the full output to a temp file and prints a warning to stderr:
+
+```
+⚠️  Output is large (47.3KB). Full output written to: /tmp/hccli-abc123.json
+
+💡 To reduce output size:
+  • Use fewer --breakdown flags
+  • Use a shorter --time-range
+  • Add filters to narrow results
+```
+
+The full JSON is still written to stdout, so piping to `jq` works normally.
