@@ -3,10 +3,46 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/LarsEckart/hccli/api"
 	"github.com/urfave/cli/v3"
 )
+
+// noValueOps are filter operators that take no value argument.
+var noValueOps = map[string]bool{
+	"exists":         true,
+	"does-not-exist": true,
+}
+
+// parseFilter parses a filter string in the form "column op [value]".
+// The column is the first whitespace-delimited token, the op is the second,
+// and the optional value is everything after the op.
+func parseFilter(s string) (api.QueryFilter, error) {
+	// Split into at most 3 parts: column, op, value
+	parts := strings.SplitN(strings.TrimSpace(s), " ", 3)
+	if len(parts) < 2 {
+		return api.QueryFilter{}, fmt.Errorf("invalid filter %q: expected \"column op [value]\"", s)
+	}
+
+	col := parts[0]
+	op := parts[1]
+
+	f := api.QueryFilter{
+		Column: col,
+		Op:     op,
+	}
+
+	if noValueOps[op] {
+		return f, nil
+	}
+
+	if len(parts) < 3 || parts[2] == "" {
+		return api.QueryFilter{}, fmt.Errorf("invalid filter %q: operator %q requires a value", s, op)
+	}
+	f.Value = parts[2]
+	return f, nil
+}
 
 func GetQueryCmd() *cli.Command {
 	return &cli.Command{
@@ -62,17 +98,13 @@ func CreateQueryCmd() *cli.Command {
 				Name:  "breakdown",
 				Usage: "Breakdown column",
 			},
-			&cli.StringFlag{
-				Name:  "filter-column",
-				Usage: "Filter column",
+			&cli.StringSliceFlag{
+				Name:  "filter",
+				Usage: `Filter in "column op [value]" form; repeat for multiple filters (e.g. --filter "duration_ms > 100" --filter "name exists")`,
 			},
 			&cli.StringFlag{
-				Name:  "filter-op",
-				Usage: "Filter operation",
-			},
-			&cli.StringFlag{
-				Name:  "filter-value",
-				Usage: "Filter value",
+				Name:  "filter-combination",
+				Usage: "How to combine filters: AND (default) or OR",
 			},
 			&cli.IntFlag{
 				Name:  "time-range",
@@ -106,15 +138,16 @@ func CreateQueryCmd() *cli.Command {
 				query.Breakdowns = []string{v}
 			}
 
-			if col := cmd.String("filter-column"); col != "" {
-				f := api.QueryFilter{
-					Column: col,
-					Op:     cmd.String("filter-op"),
+			for _, raw := range cmd.StringSlice("filter") {
+				f, err := parseFilter(raw)
+				if err != nil {
+					return err
 				}
-				if v := cmd.String("filter-value"); v != "" {
-					f.Value = v
-				}
-				query.Filters = []api.QueryFilter{f}
+				query.Filters = append(query.Filters, f)
+			}
+
+			if v := cmd.String("filter-combination"); v != "" {
+				query.FilterCombination = v
 			}
 
 			if v := cmd.Int("time-range"); v != 0 {

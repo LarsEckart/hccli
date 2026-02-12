@@ -80,6 +80,69 @@ func TestCreateQueryMultipleCalculationsCLI_Smoke(t *testing.T) {
 	}
 }
 
+func TestCreateQueryMultipleFiltersCLI_Smoke(t *testing.T) {
+	dataset := requireDataset(t)
+
+	stdout, stderr, exitCode := runCLIWithKey(t,
+		"create-query",
+		"--dataset", dataset,
+		"--calculation-op", "COUNT",
+		"--filter", "service.name exists",
+		"--filter", "service.instance.id exists",
+		"--time-range", "7200",
+	)
+	if exitCode != 0 {
+		t.Fatalf("create-query with multiple filters failed with exit code %d: %s", exitCode, stderr)
+	}
+
+	query := parseJSON(t, stdout)
+	filters, ok := query["filters"].([]any)
+	if !ok || len(filters) != 2 {
+		t.Fatalf("expected 2 filters, got %v", query["filters"])
+	}
+
+	f0 := filters[0].(map[string]any)
+	if f0["column"] != "service.name" || f0["op"] != "exists" {
+		t.Errorf("unexpected first filter: %v", f0)
+	}
+	f1 := filters[1].(map[string]any)
+	if f1["column"] != "service.instance.id" || f1["op"] != "exists" {
+		t.Errorf("unexpected second filter: %v", f1)
+	}
+}
+
+func TestCreateQueryInvalidFilterCLI(t *testing.T) {
+	_, stderr, exitCode := runCLI(t,
+		"--api-key", "fake-key",
+		"create-query",
+		"--dataset", "test",
+		"--calculation-op", "COUNT",
+		"--filter", "just-a-column",
+	)
+	if exitCode == 0 {
+		t.Fatal("expected non-zero exit code for invalid filter")
+	}
+	if !strings.Contains(stderr, "invalid filter") {
+		t.Errorf("expected error about invalid filter, got: %s", stderr)
+	}
+}
+
+func TestCreateQueryFilterMissingValueCLI(t *testing.T) {
+	_, stderr, exitCode := runCLI(t,
+		"--api-key", "fake-key",
+		"create-query",
+		"--dataset", "test",
+		"--calculation-op", "COUNT",
+		"--filter", "col1 =",
+	)
+	if exitCode == 0 {
+		t.Fatal("expected non-zero exit code for filter missing value")
+	}
+	if !strings.Contains(stderr, "requires a value") {
+		t.Errorf("expected error about missing value, got: %s", stderr)
+	}
+}
+
 func TestCreateQueryMismatchedCalculationsCLI(t *testing.T) {
 	_, stderr, exitCode := runCLI(t,
 		"--api-key", "fake-key",
