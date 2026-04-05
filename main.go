@@ -9,10 +9,18 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-func main() {
-	app := &cli.Command{
-		Name:  "hccli",
-		Usage: "A machine-friendly CLI for the Honeycomb observability platform",
+func newApp() *cli.Command {
+	cli.VersionFlag = &cli.BoolFlag{
+		Name:        "version",
+		Usage:       "print the version",
+		HideDefault: true,
+		Local:       true,
+	}
+
+	return &cli.Command{
+		Name:    "hccli",
+		Usage:   "A machine-friendly CLI for the Honeycomb observability platform",
+		Version: appVersion(),
 		Description: `Interact with Honeycomb from the command line — ideal for scripting,
 automation, and integration with CI/CD pipelines.
 
@@ -101,8 +109,10 @@ Output:
 			cmd.GetTraceCmd(),
 		},
 	}
+}
 
-	if err := app.Run(context.Background(), os.Args); err != nil {
+func main() {
+	if err := newApp().Run(context.Background(), os.Args); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
 	}
