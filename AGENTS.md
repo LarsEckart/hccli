@@ -6,12 +6,16 @@ Primary focus is easy usability for a coding agent or machine use-case.
 
 ## Commands
 
-- Install: `make install` (installs hccli binary to $GOPATH/bin)
-- Build: `make build`
+Use the standard Make targets shared across these Go CLI repos:
+
+- Format: `make fmt`
+- Lint: `make lint`
 - Test: `make test`
-- Format: `make fmt` (uses goimports)
-- Lint: `make lint` (uses golangci-lint v2)
-- All checks: `make check` (format check + lint + test)
+- Build: `make build`
+- Check: `make check`
+- Install: `make install`
+
+`make build` formats first. `make check` runs lint, test, then build.
 
 ## Project Structure
 
