@@ -34,7 +34,10 @@ func CreateQueryAnnotationCmd() *cli.Command {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 
 			annotation := &api.QueryAnnotation{
 				Name:    cmd.String("name"),
@@ -67,7 +70,10 @@ func ListQueryAnnotationsCmd() *cli.Command {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 
 			annotations, err := client.ListQueryAnnotations(ctx, cmd.String("dataset"))
 			if err != nil {
@@ -97,7 +103,10 @@ func GetQueryAnnotationCmd() *cli.Command {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 
 			annotation, err := client.GetQueryAnnotation(ctx, cmd.String("dataset"), cmd.String("id"))
 			if err != nil {
@@ -141,7 +150,10 @@ func UpdateQueryAnnotationCmd() *cli.Command {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 
 			annotation := &api.QueryAnnotation{
 				Name:    cmd.String("name"),
@@ -179,7 +191,10 @@ func DeleteQueryAnnotationCmd() *cli.Command {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 			return client.DeleteQueryAnnotation(ctx, cmd.String("dataset"), cmd.String("id"))
 		},
 	}

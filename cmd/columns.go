@@ -20,7 +20,10 @@ func ListColumnsCmd() *cli.Command {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 
 			cols, err := client.ListColumns(ctx, cmd.String("dataset"))
 			if err != nil {
@@ -50,7 +53,10 @@ func GetColumnCmd() *cli.Command {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 
 			col, err := client.GetColumn(ctx, cmd.String("dataset"), cmd.String("id"))
 			if err != nil {
@@ -93,7 +99,10 @@ func CreateColumnCmd() *cli.Command {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 
 			hidden := cmd.Bool("hidden")
 			col := &api.Column{
@@ -145,7 +154,10 @@ func UpdateColumnCmd() *cli.Command {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 
 			col := &api.Column{}
 			if v := cmd.String("type"); v != "" {
@@ -187,7 +199,10 @@ func DeleteColumnCmd() *cli.Command {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 			return client.DeleteColumn(ctx, cmd.String("dataset"), cmd.String("id"))
 		},
 	}

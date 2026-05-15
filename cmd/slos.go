@@ -18,7 +18,10 @@ func ListSLOsCmd() *cli.Command {
 			DatasetFlag(),
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 			slos, err := client.ListSLOs(ctx, cmd.String("dataset"))
 			if err != nil {
 				return err
@@ -42,11 +45,11 @@ func GetSLOCmd() *cli.Command {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
-			var (
-				slo *api.SLO
-				err error
-			)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
+			var slo *api.SLO
 			if cmd.Bool("detailed") {
 				slo, err = client.GetSLODetailed(ctx, cmd.String("dataset"), cmd.String("id"))
 			} else {
@@ -97,7 +100,10 @@ func CreateSLOCmd() *cli.Command {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 			slo := &api.SLO{
 				Name:             cmd.String("name"),
 				Description:      cmd.String("description"),
@@ -161,7 +167,10 @@ func UpdateSLOCmd() *cli.Command {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 			slo := &api.SLO{
 				Name:             cmd.String("name"),
 				Description:      cmd.String("description"),
@@ -197,7 +206,10 @@ func DeleteSLOCmd() *cli.Command {
 			IDFlag("id", "SLO ID"),
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 			return client.DeleteSLO(ctx, cmd.String("dataset"), cmd.String("id"))
 		},
 	}

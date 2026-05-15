@@ -1,6 +1,9 @@
 # Binary
 hccli
 
+# Local hccli project profile selection
+.hccli/
+
 # IDE
 .idea/
 .vscode/

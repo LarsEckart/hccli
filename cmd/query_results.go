@@ -38,7 +38,10 @@ func CreateQueryResultCmd() *cli.Command {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 			dataset := cmd.String("dataset")
 			queryID := cmd.String("query-id")
 			pollInterval := time.Duration(cmd.Int("poll-interval")) * time.Second
@@ -115,7 +118,10 @@ func GetQueryResultCmd() *cli.Command {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 
 			result, err := client.GetQueryResult(ctx, cmd.String("dataset"), cmd.String("id"))
 			if err != nil {

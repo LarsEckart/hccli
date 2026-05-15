@@ -33,7 +33,27 @@ func TestMain(m *testing.M) {
 
 func runCLI(t *testing.T, args ...string) (string, string, int) {
 	t.Helper()
+	return runCLIWithOptions(t, cliRunOptions{}, args...)
+}
+
+type cliRunOptions struct {
+	Dir   string
+	Env   []string
+	Stdin string
+}
+
+func runCLIWithOptions(t *testing.T, opts cliRunOptions, args ...string) (string, string, int) {
+	t.Helper()
 	cmd := exec.CommandContext(t.Context(), binaryPath, args...)
+	if opts.Dir != "" {
+		cmd.Dir = opts.Dir
+	}
+	if opts.Env != nil {
+		cmd.Env = opts.Env
+	}
+	if opts.Stdin != "" {
+		cmd.Stdin = strings.NewReader(opts.Stdin)
+	}
 	var stdout, stderr strings.Builder
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -88,7 +108,7 @@ func parseJSONArray(t *testing.T, s string) []any {
 
 func TestMissingAPIKeyShowsError(t *testing.T) {
 	cmd := exec.CommandContext(t.Context(), binaryPath, "auth")
-	cmd.Env = filterEnv("HONEYCOMB_API_KEY")
+	cmd.Env = isolatedConfigEnv(t)
 	out, err := cmd.CombinedOutput()
 	if err == nil {
 		t.Fatal("expected non-zero exit code when api-key is missing")
@@ -98,12 +118,25 @@ func TestMissingAPIKeyShowsError(t *testing.T) {
 	}
 }
 
-func filterEnv(exclude string) []string {
+func filterEnv(excludes ...string) []string {
 	var env []string
 	for _, e := range os.Environ() {
-		if !strings.HasPrefix(e, exclude+"=") {
+		keep := true
+		for _, exclude := range excludes {
+			if strings.HasPrefix(e, exclude+"=") {
+				keep = false
+				break
+			}
+		}
+		if keep {
 			env = append(env, e)
 		}
 	}
 	return env
+}
+
+func isolatedConfigEnv(t *testing.T) []string {
+	t.Helper()
+	env := filterEnv("HONEYCOMB_API_KEY", "HCCLI_PROFILE", "HCCLI_CONFIG_DIR")
+	return append(env, "HCCLI_CONFIG_DIR="+t.TempDir())
 }

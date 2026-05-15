@@ -13,7 +13,10 @@ func ListDatasetsCmd() *cli.Command {
 		Category: "Datasets",
 		Usage:    "List all datasets",
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 
 			datasets, err := client.ListDatasets(ctx)
 			if err != nil {
@@ -38,7 +41,10 @@ func GetDatasetCmd() *cli.Command {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 
 			ds, err := client.GetDataset(ctx, cmd.String("slug"))
 			if err != nil {
@@ -71,7 +77,10 @@ func CreateDatasetCmd() *cli.Command {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 
 			ds := &api.Dataset{
 				Name: cmd.String("name"),
@@ -121,7 +130,10 @@ func UpdateDatasetCmd() *cli.Command {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 
 			depth := int(cmd.Int("expand-json-depth"))
 			ds := &api.Dataset{
@@ -158,7 +170,10 @@ func DeleteDatasetCmd() *cli.Command {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 			return client.DeleteDataset(ctx, cmd.String("slug"))
 		},
 	}

@@ -64,7 +64,10 @@ func GetQueryCmd() *cli.Command {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 
 			query, err := client.GetQuery(ctx, cmd.String("dataset"), cmd.String("id"))
 			if err != nil {
@@ -126,7 +129,10 @@ func CreateQueryCmd() *cli.Command {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 
 			ops := cmd.StringSlice("calculation-op")
 			cols := cmd.StringSlice("calculation-column")

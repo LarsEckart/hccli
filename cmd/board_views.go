@@ -20,7 +20,10 @@ func ListBoardViewsCmd() *cli.Command {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 
 			views, err := client.ListBoardViews(ctx, cmd.String("board-id"))
 			if err != nil {
@@ -50,7 +53,10 @@ func GetBoardViewCmd() *cli.Command {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 
 			view, err := client.GetBoardView(ctx, cmd.String("board-id"), cmd.String("view-id"))
 			if err != nil {
@@ -94,7 +100,10 @@ func CreateBoardViewCmd() *cli.Command {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 
 			filter := api.BoardViewFilter{
 				Column:    cmd.String("filter-column"),
@@ -156,7 +165,10 @@ func UpdateBoardViewCmd() *cli.Command {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 
 			filter := api.BoardViewFilter{
 				Column:    cmd.String("filter-column"),
@@ -199,7 +211,10 @@ func DeleteBoardViewCmd() *cli.Command {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 			return client.DeleteBoardView(ctx, cmd.String("board-id"), cmd.String("view-id"))
 		},
 	}

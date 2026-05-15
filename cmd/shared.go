@@ -7,13 +7,17 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-func newClient(cmd *cli.Command) *api.Client {
-	timeout := time.Duration(cmd.Int("timeout")) * time.Second
-	client := api.NewClient(cmd.String("api-key"), timeout)
-	if url := cmd.String("api-url"); url != "" {
-		client.BaseURL = url
+func newClient(cmd *cli.Command) (*api.Client, error) {
+	credentials, err := resolveCredentials(cmd)
+	if err != nil {
+		return nil, err
 	}
-	return client
+	timeout := time.Duration(cmd.Int("timeout")) * time.Second
+	client := api.NewClient(credentials.APIKey, timeout)
+	if credentials.APIURL != "" {
+		client.BaseURL = credentials.APIURL
+	}
+	return client, nil
 }
 
 // IDFlag returns a standard ID flag.

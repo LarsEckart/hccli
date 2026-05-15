@@ -25,7 +25,10 @@ func GetTraceCmd() *cli.Command {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 
 			auth, err := client.GetAuth(ctx)
 			if err != nil {

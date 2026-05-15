@@ -32,4 +32,4 @@ Use the standard Make targets shared across these Go CLI repos:
 - Tests invoke the compiled binary as a subprocess (`os/exec`), not the Go API directly; `TestMain` in `cli_test.go` builds the binary once; shared helpers (`runCLI`, `runCLIWithKey`, `parseJSON`) live there too
 - One test file per resource (e.g. `boards_cli_test.go`, `columns_cli_test.go`)
 - JSON output via `json.NewEncoder(os.Stdout)` with 2-space indent
-- Auth via `X-Honeycomb-Team` header; key from `--api-key` flag or `HONEYCOMB_API_KEY` env
+- Auth via `X-Honeycomb-Team` header; profiles are the preferred local UX (`hccli auth login`, `hccli auth switch`), while `--api-key` and `HONEYCOMB_API_KEY` remain supported for CI/one-off automation

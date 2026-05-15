@@ -25,17 +25,24 @@ func newApp() *cli.Command {
 automation, and integration with CI/CD pipelines.
 
 Authentication:
-  Provide your API key via --api-key flag or HONEYCOMB_API_KEY environment variable.
+  Run hccli auth login --profile <name> --api-key-stdin to store named profiles.
+  Use hccli auth switch <name> to change the active profile.
+  For CI and one-off use, pass --api-key or set HONEYCOMB_API_KEY.
 
 Output:
   All commands output JSON with 2-space indentation, making them easy to parse
   and pipe into tools like jq for further processing.`,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:     "api-key",
-				Sources:  cli.EnvVars("HONEYCOMB_API_KEY"),
-				Usage:    "Honeycomb API key",
-				Required: true,
+				Name:    "api-key",
+				Sources: cli.EnvVars("HONEYCOMB_API_KEY"),
+				Usage:   "Honeycomb API key (overrides profiles)",
+			},
+			&cli.StringFlag{
+				Name:    "profile",
+				Aliases: []string{"p"},
+				Sources: cli.EnvVars("HCCLI_PROFILE"),
+				Usage:   "Honeycomb auth profile to use",
 			},
 			&cli.IntFlag{
 				Name:        "timeout",

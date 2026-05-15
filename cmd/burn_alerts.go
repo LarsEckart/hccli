@@ -23,7 +23,10 @@ func ListBurnAlertsCmd() *cli.Command {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 			alerts, err := client.ListBurnAlerts(ctx, cmd.String("dataset"), cmd.String("slo-id"))
 			if err != nil {
 				return err
@@ -43,7 +46,10 @@ func GetBurnAlertCmd() *cli.Command {
 			IDFlag("id", "Burn Alert ID"),
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 			alert, err := client.GetBurnAlert(ctx, cmd.String("dataset"), cmd.String("id"))
 			if err != nil {
 				return err
@@ -114,7 +120,10 @@ Examples:
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 
 			ba, err := buildBurnAlert(cmd)
 			if err != nil {
@@ -167,7 +176,10 @@ func UpdateBurnAlertCmd() *cli.Command {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 
 			ba, err := buildBurnAlert(cmd)
 			if err != nil {
@@ -193,7 +205,10 @@ func DeleteBurnAlertCmd() *cli.Command {
 			IDFlag("id", "Burn Alert ID"),
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 			return client.DeleteBurnAlert(ctx, cmd.String("dataset"), cmd.String("id"))
 		},
 	}

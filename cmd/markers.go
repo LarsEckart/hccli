@@ -20,7 +20,10 @@ func ListMarkersCmd() *cli.Command {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 
 			markers, err := client.ListMarkers(ctx, cmd.String("dataset"))
 			if err != nil {
@@ -65,7 +68,10 @@ func CreateMarkerCmd() *cli.Command {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 
 			m := &api.Marker{
 				Message: cmd.String("message"),
@@ -129,7 +135,10 @@ func UpdateMarkerCmd() *cli.Command {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 
 			m := &api.Marker{
 				Message: cmd.String("message"),
@@ -173,7 +182,10 @@ func DeleteMarkerCmd() *cli.Command {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 			return client.DeleteMarker(ctx, cmd.String("dataset"), cmd.String("id"))
 		},
 	}

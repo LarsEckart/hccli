@@ -20,7 +20,10 @@ func ListDerivedColumnsCmd() *cli.Command {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 
 			cols, err := client.ListDerivedColumns(ctx, cmd.String("dataset"))
 			if err != nil {
@@ -50,7 +53,10 @@ func GetDerivedColumnCmd() *cli.Command {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 
 			col, err := client.GetDerivedColumn(ctx, cmd.String("dataset"), cmd.String("id"))
 			if err != nil {
@@ -89,7 +95,10 @@ func CreateDerivedColumnCmd() *cli.Command {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 
 			col := &api.DerivedColumn{
 				Alias:      cmd.String("alias"),
@@ -141,7 +150,10 @@ func UpdateDerivedColumnCmd() *cli.Command {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 
 			col := &api.DerivedColumn{
 				Alias:      cmd.String("alias"),
@@ -179,7 +191,10 @@ func DeleteDerivedColumnCmd() *cli.Command {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := newClient(cmd)
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
 			return client.DeleteDerivedColumn(ctx, cmd.String("dataset"), cmd.String("id"))
 		},
 	}
