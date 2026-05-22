@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/LarsEckart/hccli/api"
 	"github.com/LarsEckart/hccli/timefmt"
@@ -89,14 +90,16 @@ type queryInput struct {
 // The column is the first whitespace-delimited token, the op is the second,
 // and the optional value is everything after the op.
 func parseFilter(s string) (api.QueryFilter, error) {
-	// Split into at most 3 parts: column, op, value
-	parts := strings.SplitN(strings.TrimSpace(s), " ", 3)
+	input := strings.TrimSpace(s)
+	parts := strings.Fields(input)
 	if len(parts) < 2 {
 		return api.QueryFilter{}, fmt.Errorf("invalid filter %q: expected \"column op [value]\"", s)
 	}
 
 	col := parts[0]
 	op := parts[1]
+	rest := strings.TrimLeftFunc(input[len(col):], unicode.IsSpace)
+	value := strings.TrimLeftFunc(rest[len(op):], unicode.IsSpace)
 
 	f := api.QueryFilter{
 		Column: col,
@@ -107,10 +110,10 @@ func parseFilter(s string) (api.QueryFilter, error) {
 		return f, nil
 	}
 
-	if len(parts) < 3 || parts[2] == "" {
+	if value == "" {
 		return api.QueryFilter{}, fmt.Errorf("invalid filter %q: operator %q requires a value", s, op)
 	}
-	f.Value = parseFilterValue(parts[2])
+	f.Value = parseFilterValue(value)
 	return f, nil
 }
 
