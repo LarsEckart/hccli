@@ -79,12 +79,10 @@ func CreateMarkerCmd() *cli.Command {
 				URL:     cmd.String("url"),
 			}
 			if cmd.IsSet("start-time") {
-				v := int64(cmd.Int("start-time"))
-				m.StartTime = &v
+				m.StartTime = new(int64(cmd.Int("start-time")))
 			}
 			if cmd.IsSet("end-time") {
-				v := int64(cmd.Int("end-time"))
-				m.EndTime = &v
+				m.EndTime = new(int64(cmd.Int("end-time")))
 			}
 
 			created, err := client.CreateMarker(ctx, cmd.String("dataset"), m)
@@ -146,12 +144,10 @@ func UpdateMarkerCmd() *cli.Command {
 				URL:     cmd.String("url"),
 			}
 			if cmd.IsSet("start-time") {
-				v := int64(cmd.Int("start-time"))
-				m.StartTime = &v
+				m.StartTime = new(int64(cmd.Int("start-time")))
 			}
 			if cmd.IsSet("end-time") {
-				v := int64(cmd.Int("end-time"))
-				m.EndTime = &v
+				m.EndTime = new(int64(cmd.Int("end-time")))
 			}
 
 			updated, err := client.UpdateMarker(ctx, cmd.String("dataset"), cmd.String("id"), m)

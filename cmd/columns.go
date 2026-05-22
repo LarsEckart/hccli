@@ -104,11 +104,10 @@ func CreateColumnCmd() *cli.Command {
 				return err
 			}
 
-			hidden := cmd.Bool("hidden")
 			col := &api.Column{
 				KeyName: cmd.String("key-name"),
 				Type:    cmd.String("type"),
-				Hidden:  &hidden,
+				Hidden:  new(cmd.Bool("hidden")),
 			}
 			if v := cmd.String("description"); v != "" {
 				col.Description = v
@@ -167,8 +166,7 @@ func UpdateColumnCmd() *cli.Command {
 				col.Description = v
 			}
 			if cmd.IsSet("hidden") {
-				hidden := cmd.Bool("hidden")
-				col.Hidden = &hidden
+				col.Hidden = new(cmd.Bool("hidden"))
 			}
 
 			updated, err := client.UpdateColumn(ctx, cmd.String("dataset"), cmd.String("id"), col)

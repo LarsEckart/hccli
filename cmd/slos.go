@@ -108,8 +108,8 @@ func CreateSLOCmd() *cli.Command {
 				Name:             cmd.String("name"),
 				Description:      cmd.String("description"),
 				SLI:              api.SLOSLI{Alias: cmd.String("sli-alias")},
-				TimePeriodDays:   int(cmd.Int("time-period-days")),
-				TargetPerMillion: int(cmd.Int("target-per-million")),
+				TimePeriodDays:   cmd.Int("time-period-days"),
+				TargetPerMillion: cmd.Int("target-per-million"),
 			}
 
 			if tj := cmd.String("tags-json"); tj != "" {
@@ -175,8 +175,8 @@ func UpdateSLOCmd() *cli.Command {
 				Name:             cmd.String("name"),
 				Description:      cmd.String("description"),
 				SLI:              api.SLOSLI{Alias: cmd.String("sli-alias")},
-				TimePeriodDays:   int(cmd.Int("time-period-days")),
-				TargetPerMillion: int(cmd.Int("target-per-million")),
+				TimePeriodDays:   cmd.Int("time-period-days"),
+				TargetPerMillion: cmd.Int("target-per-million"),
 			}
 
 			if tj := cmd.String("tags-json"); tj != "" {

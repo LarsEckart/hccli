@@ -19,8 +19,12 @@ Use the standard Make targets shared across these Go CLI repos:
 
 ## Project Structure
 
-- `main.go` — CLI entry point, subcommand wiring (urfave/cli v3)
-- `api/` — Honeycomb API client and types
+- `main.go` — CLI entry point; creates the root urfave/cli v3 app and registers subcommands from `cmd/`
+- `cmd/` — CLI command definitions, flag handling, credential resolution, and JSON output helpers
+- `api/` — Honeycomb API client, request/response types, and one client method file per resource
+- `tests/` — CLI smoke/integration tests that build and execute the binary as a subprocess
+- `timefmt/` — shared parsing helpers for human-friendly time ranges and timestamps
+- `version.go` — version resolution from linker-injected value or Go build info
 - API docs: https://api-docs.honeycomb.io/api
 
 ## Code Style

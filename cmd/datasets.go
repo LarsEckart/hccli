@@ -89,8 +89,7 @@ func CreateDatasetCmd() *cli.Command {
 				ds.Description = v
 			}
 			if cmd.IsSet("expand-json-depth") {
-				depth := int(cmd.Int("expand-json-depth"))
-				ds.ExpandJSONDepth = &depth
+				ds.ExpandJSONDepth = new(cmd.Int("expand-json-depth"))
 			}
 
 			created, err := client.CreateDataset(ctx, ds)
@@ -135,15 +134,13 @@ func UpdateDatasetCmd() *cli.Command {
 				return err
 			}
 
-			depth := int(cmd.Int("expand-json-depth"))
 			ds := &api.Dataset{
 				Description:     cmd.String("description"),
-				ExpandJSONDepth: &depth,
+				ExpandJSONDepth: new(cmd.Int("expand-json-depth")),
 			}
 			if cmd.IsSet("delete-protected") {
-				dp := cmd.Bool("delete-protected")
 				ds.Settings = &api.DatasetSettings{
-					DeleteProtected: &dp,
+					DeleteProtected: new(cmd.Bool("delete-protected")),
 				}
 			}
 

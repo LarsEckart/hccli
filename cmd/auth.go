@@ -127,8 +127,7 @@ func authStatusCmd() *cli.Command {
 					return err
 				}
 				if profile, ok := cfg.Profiles[credentials.Profile]; ok {
-					summary := summarizeProfile(credentials.Profile, profile, cfg.ActiveProfile, localActiveProfile())
-					out.Info = &summary
+					out.Info = new(summarizeProfile(credentials.Profile, profile, cfg.ActiveProfile, localActiveProfile()))
 				}
 			}
 
@@ -138,8 +137,7 @@ func authStatusCmd() *cli.Command {
 					return err
 				}
 				auth, err := client.GetAuth(ctx)
-				valid := err == nil
-				out.Valid = &valid
+				out.Valid = new(err == nil)
 				if err != nil {
 					return fmt.Errorf("validating credentials: %w", err)
 				}

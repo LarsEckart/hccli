@@ -231,17 +231,14 @@ func buildBurnAlert(cmd *cli.Command) (*api.BurnAlert, error) {
 	switch ba.AlertType {
 	case "exhaustion_time":
 		if cmd.IsSet("exhaustion-minutes") {
-			v := int(cmd.Int("exhaustion-minutes"))
-			ba.ExhaustionMinutes = &v
+			ba.ExhaustionMinutes = new(cmd.Int("exhaustion-minutes"))
 		}
 	case "budget_rate":
 		if cmd.IsSet("budget-rate-window-minutes") {
-			v := int(cmd.Int("budget-rate-window-minutes"))
-			ba.BudgetRateWindowMinutes = &v
+			ba.BudgetRateWindowMinutes = new(cmd.Int("budget-rate-window-minutes"))
 		}
 		if cmd.IsSet("budget-rate-decrease-per-million") {
-			v := int(cmd.Int("budget-rate-decrease-per-million"))
-			ba.BudgetRateDecreaseThresholdPerMillion = &v
+			ba.BudgetRateDecreaseThresholdPerMillion = new(cmd.Int("budget-rate-decrease-per-million"))
 		}
 	}
 
