@@ -24,6 +24,10 @@ type Client struct {
 }
 
 func NewClient(apiKey string, timeout time.Duration) *Client {
+	if timeout == 0 {
+		timeout = DefaultTimeout
+	}
+
 	return &Client{
 		APIKey:  apiKey,
 		BaseURL: defaultBaseURL,
