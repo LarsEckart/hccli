@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -214,6 +216,137 @@ func TestCreateQueryOrderLimitHavingCLI(t *testing.T) {
 	secondHaving := havings[1].(map[string]any)
 	if secondHaving["calculate_op"] != "MAX" || secondHaving["column"] != "duration_ms" || secondHaving["op"] != "<=" || secondHaving["value"] != float64(5000) {
 		t.Errorf("unexpected second having: %v", secondHaving)
+	}
+}
+
+func TestCreateQueryFromQueryJSONFileCLI(t *testing.T) {
+	queryPath := filepath.Join(t.TempDir(), "query.json")
+	if err := os.WriteFile(queryPath, []byte(`{
+  "calculations": [{"op": "COUNT"}],
+  "orders": [{"op": "COUNT", "order": "descending"}],
+  "limit": 5,
+  "future_field": {"preserved": true}
+}`), 0o600); err != nil {
+		t.Fatalf("failed to write query json: %v", err)
+	}
+
+	var request map[string]any
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			t.Fatalf("failed to decode request body: %v", err)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(map[string]any{"id": "query-1"}); err != nil {
+			t.Fatalf("failed to encode response: %v", err)
+		}
+	}))
+	defer srv.Close()
+
+	stdout, stderr, code := runCLI(t,
+		"--api-key", "fake-key",
+		"--api-url", srv.URL,
+		"create-query",
+		"--dataset", "test-dataset",
+		"--query-json", queryPath,
+	)
+	if code != 0 {
+		t.Fatalf("expected exit code 0, got %d\nstdout: %s\nstderr: %s", code, stdout, stderr)
+	}
+
+	if request["limit"] != float64(5) {
+		t.Fatalf("expected raw limit 5, got %v", request["limit"])
+	}
+	futureField, ok := request["future_field"].(map[string]any)
+	if !ok || futureField["preserved"] != true {
+		t.Fatalf("expected future field to be preserved, got %v", request["future_field"])
+	}
+}
+
+func TestCreateQueryFromQueryJSONStdinCLI(t *testing.T) {
+	var request map[string]any
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			t.Fatalf("failed to decode request body: %v", err)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(map[string]any{"id": "query-1"}); err != nil {
+			t.Fatalf("failed to encode response: %v", err)
+		}
+	}))
+	defer srv.Close()
+
+	stdout, stderr, code := runCLIWithOptions(t,
+		cliRunOptions{Stdin: `{"calculations":[{"op":"COUNT"}],"time_range":1800}`},
+		"--api-key", "fake-key",
+		"--api-url", srv.URL,
+		"create-query",
+		"--dataset", "test-dataset",
+		"--query-json", "-",
+	)
+	if code != 0 {
+		t.Fatalf("expected exit code 0, got %d\nstdout: %s\nstderr: %s", code, stdout, stderr)
+	}
+	if request["time_range"] != float64(1800) {
+		t.Fatalf("expected raw time_range 1800, got %v", request["time_range"])
+	}
+}
+
+func TestCreateQueryInvalidQueryJSONCLI(t *testing.T) {
+	called := false
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
+		http.Error(w, "should not be called", http.StatusInternalServerError)
+	}))
+	defer srv.Close()
+
+	_, stderr, code := runCLIWithOptions(t,
+		cliRunOptions{Stdin: `{"calculations":`},
+		"--api-key", "fake-key",
+		"--api-url", srv.URL,
+		"create-query",
+		"--dataset", "test-dataset",
+		"--query-json", "-",
+	)
+	if code == 0 {
+		t.Fatal("expected non-zero exit code for invalid query JSON")
+	}
+	if called {
+		t.Fatal("expected invalid query JSON to fail before calling API")
+	}
+	if !strings.Contains(stderr, "invalid query JSON") {
+		t.Errorf("expected invalid query JSON error, got: %s", stderr)
+	}
+}
+
+func TestCreateQueryQueryJSONRejectsQueryFlagsCLI(t *testing.T) {
+	queryPath := filepath.Join(t.TempDir(), "query.json")
+	if err := os.WriteFile(queryPath, []byte(`{"calculations":[{"op":"COUNT"}]}`), 0o600); err != nil {
+		t.Fatalf("failed to write query json: %v", err)
+	}
+
+	called := false
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
+		http.Error(w, "should not be called", http.StatusInternalServerError)
+	}))
+	defer srv.Close()
+
+	_, stderr, code := runCLI(t,
+		"--api-key", "fake-key",
+		"--api-url", srv.URL,
+		"create-query",
+		"--dataset", "test-dataset",
+		"--query-json", queryPath,
+		"--calculation-op", "COUNT",
+	)
+	if code == 0 {
+		t.Fatal("expected non-zero exit code for conflicting query JSON flags")
+	}
+	if called {
+		t.Fatal("expected conflicting query JSON flags to fail before calling API")
+	}
+	if !strings.Contains(stderr, "--query-json cannot be combined with --calculation-op") {
+		t.Errorf("expected query-json conflict error, got: %s", stderr)
 	}
 }
 

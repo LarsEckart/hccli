@@ -117,6 +117,15 @@ hccli run-query \
   --timeout 60
 ```
 
+Use raw query JSON when you need a Honeycomb query field that does not have a dedicated flag yet. `--query-json` accepts a file path or `-` for stdin, and cannot be combined with individual query-building flags:
+
+```bash
+hccli create-query --dataset aws --query-json query.json
+
+jq '{calculations: [{op: "COUNT"}], time_range: 1800}' |
+  hccli run-query --dataset aws --query-json -
+```
+
 ## Large Output
 
 When JSON output exceeds 30KB, hccli writes the full output to a temp file and prints a warning to stderr:

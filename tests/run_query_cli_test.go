@@ -136,3 +136,66 @@ func TestRunQueryInvalidArgumentsFailBeforeAPI(t *testing.T) {
 		t.Errorf("expected invalid order error, got: %s", stderr)
 	}
 }
+
+func TestRunQueryFromQueryJSONStdinCLI(t *testing.T) {
+	var createdQuery map[string]any
+	var resultRequest map[string]any
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case r.Method == http.MethodPost && r.URL.Path == "/1/queries/test-dataset":
+			if err := json.NewDecoder(r.Body).Decode(&createdQuery); err != nil {
+				t.Fatalf("failed to decode create-query body: %v", err)
+			}
+			if err := json.NewEncoder(w).Encode(map[string]any{"id": "query-json-1"}); err != nil {
+				t.Fatalf("failed to encode create-query response: %v", err)
+			}
+		case r.Method == http.MethodPost && r.URL.Path == "/1/query_results/test-dataset":
+			if err := json.NewDecoder(r.Body).Decode(&resultRequest); err != nil {
+				t.Fatalf("failed to decode create-query-result body: %v", err)
+			}
+			if err := json.NewEncoder(w).Encode(map[string]any{
+				"id":       "result-json-1",
+				"complete": true,
+				"query_id": "query-json-1",
+				"data": map[string]any{
+					"results": []any{map[string]any{"data": map[string]any{"COUNT": 10}}},
+				},
+			}); err != nil {
+				t.Fatalf("failed to encode query result response: %v", err)
+			}
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer srv.Close()
+
+	stdout, stderr, code := runCLIWithOptions(t,
+		cliRunOptions{Stdin: `{"calculations":[{"op":"COUNT"}],"future_field":{"preserved":true}}`},
+		"--api-key", "fake-key",
+		"--api-url", srv.URL,
+		"run-query",
+		"--dataset", "test-dataset",
+		"--query-json", "-",
+	)
+	if code != 0 {
+		t.Fatalf("expected exit code 0, got %d\nstdout: %s\nstderr: %s", code, stdout, stderr)
+	}
+	if stderr != "" {
+		t.Fatalf("expected empty stderr for non-empty results, got: %s", stderr)
+	}
+
+	futureField, ok := createdQuery["future_field"].(map[string]any)
+	if !ok || futureField["preserved"] != true {
+		t.Fatalf("expected future field to be preserved, got %v", createdQuery["future_field"])
+	}
+	if resultRequest["query_id"] != "query-json-1" {
+		t.Fatalf("expected query result request for query-json-1, got %v", resultRequest)
+	}
+
+	result := parseJSON(t, stdout)
+	if result["id"] != "result-json-1" {
+		t.Errorf("expected result-json-1 output, got %v", result["id"])
+	}
+}

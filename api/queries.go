@@ -1,6 +1,10 @@
 package api
 
-import "context"
+import (
+	"bytes"
+	"context"
+	"net/http"
+)
 
 type Query struct {
 	ID                string        `json:"id,omitempty"`
@@ -48,4 +52,17 @@ func (c *Client) GetQuery(ctx context.Context, dataset string, queryID string) (
 
 func (c *Client) CreateQuery(ctx context.Context, dataset string, query *Query) (*Query, error) {
 	return Create[Query](c, ctx, "/1/queries/"+dataset, query)
+}
+
+func (c *Client) CreateQueryRaw(ctx context.Context, dataset string, body []byte) (map[string]any, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.BaseURL+"/1/queries/"+dataset, bytes.NewReader(body))
+	if err != nil {
+		return nil, err
+	}
+
+	var result map[string]any
+	if err := c.doJSON(req, &result); err != nil {
+		return nil, err
+	}
+	return result, nil
 }

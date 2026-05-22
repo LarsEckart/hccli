@@ -1,8 +1,12 @@
 package cmd
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -59,6 +63,26 @@ var havingOps = map[string]bool{
 	">=": true,
 	"<":  true,
 	"<=": true,
+}
+
+var queryFlagNames = []string{
+	"calculation-op",
+	"calculation-column",
+	"breakdown",
+	"filter",
+	"filter-combination",
+	"order",
+	"limit",
+	"having",
+	"time-range",
+	"from",
+	"to",
+	"timezone",
+}
+
+type queryInput struct {
+	Query   *api.Query
+	RawJSON []byte
 }
 
 // parseFilter parses a filter string in the form "column op [value]".
@@ -285,9 +309,8 @@ func queryBuildFlags() []cli.Flag {
 			Required: true,
 		},
 		&cli.StringSliceFlag{
-			Name:     "calculation-op",
-			Usage:    "Calculation operation (e.g. COUNT, AVG, P99); repeat for multiple calculations",
-			Required: true,
+			Name:  "calculation-op",
+			Usage: "Calculation operation (e.g. COUNT, AVG, P99); repeat for multiple calculations",
 		},
 		&cli.StringSliceFlag{
 			Name:  "calculation-column",
@@ -333,6 +356,10 @@ func queryBuildFlags() []cli.Flag {
 			Name:  "timezone",
 			Usage: `Timezone for parsing dates (e.g. "America/New_York", default UTC)`,
 		},
+		&cli.StringFlag{
+			Name:  "query-json",
+			Usage: "Path to raw Honeycomb query JSON, or - for stdin; cannot be combined with query-building flags",
+		},
 	}
 }
 
@@ -346,6 +373,10 @@ func queryBuildDescription() string {
 func buildQueryFromFlags(cmd *cli.Command) (*api.Query, error) {
 	ops := cmd.StringSlice("calculation-op")
 	cols := cmd.StringSlice("calculation-column")
+
+	if len(ops) == 0 {
+		return nil, fmt.Errorf("one or more --calculation-op values are required unless --query-json is used")
+	}
 
 	if len(cols) > 0 && len(cols) != len(ops) {
 		return nil, fmt.Errorf("number of --calculation-column values (%d) must match --calculation-op values (%d)", len(cols), len(ops))
@@ -444,6 +475,50 @@ func buildQueryFromFlags(cmd *cli.Command) (*api.Query, error) {
 	return query, nil
 }
 
+func buildQueryInputFromFlags(cmd *cli.Command) (*queryInput, error) {
+	if path := cmd.String("query-json"); path != "" {
+		for _, name := range queryFlagNames {
+			if cmd.IsSet(name) {
+				return nil, fmt.Errorf("--query-json cannot be combined with --%s", name)
+			}
+		}
+
+		raw, err := readQueryJSON(path)
+		if err != nil {
+			return nil, err
+		}
+		return &queryInput{RawJSON: raw}, nil
+	}
+
+	query, err := buildQueryFromFlags(cmd)
+	if err != nil {
+		return nil, err
+	}
+	return &queryInput{Query: query}, nil
+}
+
+func readQueryJSON(path string) ([]byte, error) {
+	var data []byte
+	var err error
+	if path == "-" {
+		data, err = io.ReadAll(os.Stdin)
+		if err != nil {
+			return nil, fmt.Errorf("reading query-json from stdin: %w", err)
+		}
+	} else {
+		data, err = os.ReadFile(path)
+		if err != nil {
+			return nil, fmt.Errorf("reading query-json %q: %w", path, err)
+		}
+	}
+
+	var obj map[string]any
+	if err := json.Unmarshal(data, &obj); err != nil {
+		return nil, fmt.Errorf("invalid query JSON %q: %w", path, err)
+	}
+	return bytes.TrimSpace(data), nil
+}
+
 func CreateQueryCmd() *cli.Command {
 	return &cli.Command{
 		Name:        "create-query",
@@ -457,12 +532,20 @@ func CreateQueryCmd() *cli.Command {
 				return err
 			}
 
-			query, err := buildQueryFromFlags(cmd)
+			input, err := buildQueryInputFromFlags(cmd)
 			if err != nil {
 				return err
 			}
 
-			created, err := client.CreateQuery(ctx, cmd.String("dataset"), query)
+			if input.RawJSON != nil {
+				created, err := client.CreateQueryRaw(ctx, cmd.String("dataset"), input.RawJSON)
+				if err != nil {
+					return err
+				}
+				return printJSON(created)
+			}
+
+			created, err := client.CreateQuery(ctx, cmd.String("dataset"), input.Query)
 			if err != nil {
 				return err
 			}
@@ -485,7 +568,7 @@ func RunQueryCmd() *cli.Command {
   hccli run-query --dataset aws --calculation-op MAX --calculation-column duration_ms --filter "http.route contains /service/awards" --time-range "30 minutes"`,
 		Flags: flags,
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			query, err := buildQueryFromFlags(cmd)
+			input, err := buildQueryInputFromFlags(cmd)
 			if err != nil {
 				return err
 			}
@@ -496,17 +579,27 @@ func RunQueryCmd() *cli.Command {
 			}
 
 			dataset := cmd.String("dataset")
-			created, err := client.CreateQuery(ctx, dataset, query)
-			if err != nil {
-				return err
+			var queryID string
+			if input.RawJSON != nil {
+				created, err := client.CreateQueryRaw(ctx, dataset, input.RawJSON)
+				if err != nil {
+					return err
+				}
+				queryID, _ = created["id"].(string)
+			} else {
+				created, err := client.CreateQuery(ctx, dataset, input.Query)
+				if err != nil {
+					return err
+				}
+				queryID = created.ID
 			}
-			if created.ID == "" {
+			if queryID == "" {
 				return fmt.Errorf("created query response did not include an id")
 			}
 
 			pollInterval := time.Duration(cmd.Int("poll-interval")) * time.Second
 			timeout := time.Duration(cmd.Int("timeout")) * time.Second
-			result, err := pollQueryResult(ctx, client, dataset, created.ID, pollInterval, timeout)
+			result, err := pollQueryResult(ctx, client, dataset, queryID, pollInterval, timeout)
 			if err != nil {
 				return err
 			}
