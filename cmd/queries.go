@@ -589,7 +589,7 @@ func RunQueryCmd() *cli.Command {
 		Usage:    "Create a query and return results (polls until complete)",
 		Description: `Examples:
   hccli run-query --dataset aws --calculation-op COUNT --breakdown service.name --order "COUNT desc" --limit 10
-  hccli run-query --dataset aws --calculation-op MAX --calculation-column duration_ms --filter "http.route contains /service/awards" --time-range "30 minutes"`,
+  hccli run-query --dataset aws --calculation-op MAX --calculation-column duration_ms --filter "http.route contains /service/awards" --time-range "30 minutes" --result-timeout 60`,
 		Flags: flags,
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			input, err := buildQueryInputFromFlags(cmd)
@@ -622,7 +622,7 @@ func RunQueryCmd() *cli.Command {
 			}
 
 			pollInterval := time.Duration(cmd.Int("poll-interval")) * time.Second
-			timeout := time.Duration(cmd.Int("timeout")) * time.Second
+			timeout := time.Duration(cmd.Int("result-timeout")) * time.Second
 			result, err := pollQueryResult(ctx, client, dataset, queryID, pollInterval, timeout)
 			if err != nil {
 				return err

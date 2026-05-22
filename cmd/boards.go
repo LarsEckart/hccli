@@ -190,12 +190,14 @@ func DeleteBoardCmd() *cli.Command {
 				Required: true,
 			},
 		},
-		Action: func(ctx context.Context, cmd *cli.Command) error {
+		Action: deleteAction("board", func(ctx context.Context, cmd *cli.Command) error {
 			client, err := newClient(cmd)
 			if err != nil {
 				return err
 			}
 			return client.DeleteBoard(ctx, cmd.String("id"))
-		},
+		}, func(cmd *cli.Command) deleteOutput {
+			return deleteOutput{ID: cmd.String("id")}
+		}),
 	}
 }

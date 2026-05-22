@@ -29,7 +29,7 @@ func TestCreateAndGetQueryResultCLI_Smoke(t *testing.T) {
 		"create-query-result",
 		"--dataset", dataset,
 		"--query-id", queryID,
-		"--timeout", "30",
+		"--result-timeout", "30",
 	)
 	if exitCode != 0 {
 		t.Fatalf("create-query-result failed with exit code %d\nstdout: %s\nstderr: %s", exitCode, stdout, stderr)

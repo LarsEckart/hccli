@@ -17,10 +17,11 @@ func newApp() *cli.Command {
 		Local:       true,
 	}
 
-	return &cli.Command{
-		Name:    "hccli",
-		Usage:   "A machine-friendly CLI for the Honeycomb observability platform",
-		Version: appVersion(),
+	app := &cli.Command{
+		Name:            "hccli",
+		Usage:           "A machine-friendly CLI for the Honeycomb observability platform",
+		Version:         appVersion(),
+		HideHelpCommand: true,
 		Description: `Interact with Honeycomb from the command line — ideal for scripting,
 automation, and integration with CI/CD pipelines.
 
@@ -30,7 +31,7 @@ Authentication:
   For CI and one-off use, pass --api-key or set HONEYCOMB_API_KEY.
 
 Output:
-  All commands output JSON with 2-space indentation, making them easy to parse
+  Commands output JSON with 2-space indentation, making them easy to parse
   and pipe into tools like jq for further processing.`,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
@@ -59,6 +60,7 @@ Output:
 			},
 		},
 		Commands: []*cli.Command{
+			cmd.HelpCmd(),
 			cmd.AuthCmd(),
 			cmd.AuthV2Cmd(),
 			cmd.ListBoardsCmd(),
@@ -117,6 +119,8 @@ Output:
 			cmd.GetTraceCmd(),
 		},
 	}
+	cmd.ApplyHelpConventions(app)
+	return app
 }
 
 func main() {

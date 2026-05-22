@@ -204,13 +204,15 @@ func DeleteBurnAlertCmd() *cli.Command {
 			DatasetFlag(),
 			IDFlag("id", "Burn Alert ID"),
 		},
-		Action: func(ctx context.Context, cmd *cli.Command) error {
+		Action: deleteAction("burn_alert", func(ctx context.Context, cmd *cli.Command) error {
 			client, err := newClient(cmd)
 			if err != nil {
 				return err
 			}
 			return client.DeleteBurnAlert(ctx, cmd.String("dataset"), cmd.String("id"))
-		},
+		}, func(cmd *cli.Command) deleteOutput {
+			return deleteOutput{Dataset: cmd.String("dataset"), ID: cmd.String("id")}
+		}),
 	}
 }
 

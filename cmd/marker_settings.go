@@ -143,12 +143,14 @@ func DeleteMarkerSettingCmd() *cli.Command {
 				Required: true,
 			},
 		},
-		Action: func(ctx context.Context, cmd *cli.Command) error {
+		Action: deleteAction("marker_setting", func(ctx context.Context, cmd *cli.Command) error {
 			client, err := newClient(cmd)
 			if err != nil {
 				return err
 			}
 			return client.DeleteMarkerSetting(ctx, cmd.String("dataset"), cmd.String("id"))
-		},
+		}, func(cmd *cli.Command) deleteOutput {
+			return deleteOutput{Dataset: cmd.String("dataset"), ID: cmd.String("id")}
+		}),
 	}
 }

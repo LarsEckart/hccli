@@ -205,12 +205,14 @@ func DeleteSLOCmd() *cli.Command {
 			DatasetFlag(),
 			IDFlag("id", "SLO ID"),
 		},
-		Action: func(ctx context.Context, cmd *cli.Command) error {
+		Action: deleteAction("slo", func(ctx context.Context, cmd *cli.Command) error {
 			client, err := newClient(cmd)
 			if err != nil {
 				return err
 			}
 			return client.DeleteSLO(ctx, cmd.String("dataset"), cmd.String("id"))
-		},
+		}, func(cmd *cli.Command) deleteOutput {
+			return deleteOutput{Dataset: cmd.String("dataset"), ID: cmd.String("id")}
+		}),
 	}
 }

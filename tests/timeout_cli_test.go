@@ -43,8 +43,8 @@ func TestTimeoutFlag(t *testing.T) {
 }
 
 func TestRunQueryLocalTimeoutDoesNotOverrideHTTPTimeout(t *testing.T) {
-	// Server that stalls during query creation. The local run-query --timeout is
-	// the polling timeout and must not become the HTTP client timeout.
+	// Server that stalls during query creation. The local run-query
+	// --result-timeout is the polling timeout and must not become the HTTP client timeout.
 	done := make(chan struct{})
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		<-done
@@ -62,7 +62,7 @@ func TestRunQueryLocalTimeoutDoesNotOverrideHTTPTimeout(t *testing.T) {
 		"run-query",
 		"--dataset", "test-dataset",
 		"--calculation-op", "COUNT",
-		"--timeout", "4",
+		"--result-timeout", "4",
 	)
 	elapsed := time.Since(start)
 

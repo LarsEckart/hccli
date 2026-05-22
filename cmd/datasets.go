@@ -169,12 +169,14 @@ func DeleteDatasetCmd() *cli.Command {
 				Required: true,
 			},
 		},
-		Action: func(ctx context.Context, cmd *cli.Command) error {
+		Action: deleteAction("dataset", func(ctx context.Context, cmd *cli.Command) error {
 			client, err := newClient(cmd)
 			if err != nil {
 				return err
 			}
 			return client.DeleteDataset(ctx, cmd.String("slug"))
-		},
+		}, func(cmd *cli.Command) deleteOutput {
+			return deleteOutput{Slug: cmd.String("slug")}
+		}),
 	}
 }

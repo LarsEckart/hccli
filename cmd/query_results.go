@@ -18,8 +18,8 @@ func queryResultPollingFlags() []cli.Flag {
 			Value: 2,
 		},
 		&cli.IntFlag{
-			Name:  "timeout",
-			Usage: "Maximum seconds to wait for results",
+			Name:  "result-timeout",
+			Usage: "Maximum seconds to wait for query results",
 			Value: 60,
 		},
 	}
@@ -85,7 +85,7 @@ func CreateQueryResultCmd() *cli.Command {
 			dataset := cmd.String("dataset")
 			queryID := cmd.String("query-id")
 			pollInterval := time.Duration(cmd.Int("poll-interval")) * time.Second
-			timeout := time.Duration(cmd.Int("timeout")) * time.Second
+			timeout := time.Duration(cmd.Int("result-timeout")) * time.Second
 
 			result, err := pollQueryResult(ctx, client, dataset, queryID, pollInterval, timeout)
 			if err != nil {

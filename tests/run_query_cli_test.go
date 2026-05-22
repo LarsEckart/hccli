@@ -74,7 +74,7 @@ func TestRunQueryCLI(t *testing.T) {
 		"--limit", "1",
 		"--time-range", "30 minutes",
 		"--poll-interval", "1",
-		"--timeout", "5",
+		"--result-timeout", "5",
 	)
 	if code != 0 {
 		t.Fatalf("expected exit code 0, got %d\nstdout: %s\nstderr: %s", code, stdout, stderr)

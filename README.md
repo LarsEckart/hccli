@@ -116,7 +116,7 @@ hccli create-query \
   --filter "http.route contains /service/awards"
 ```
 
-Create and execute a query in one step with `run-query`. It accepts the same query-building flags as `create-query`, plus `--poll-interval` and `--timeout` from `create-query-result`:
+Create and execute a query in one step with `run-query`. It accepts the same query-building flags as `create-query`, plus `--poll-interval` and `--result-timeout` from `create-query-result`:
 
 ```bash
 hccli run-query \
@@ -125,7 +125,7 @@ hccli run-query \
   --calculation-column duration_ms \
   --filter "http.route contains /service/awards" \
   --time-range "30 minutes" \
-  --timeout 60
+  --result-timeout 60
 ```
 
 Use raw query JSON when you need a Honeycomb query field that does not have a dedicated flag yet. `--query-json` accepts a file path or `-` for stdin, and cannot be combined with individual query-building flags:
