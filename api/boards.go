@@ -70,7 +70,7 @@ type BoardViewFilter struct {
 }
 
 func (c *Client) GetBoard(ctx context.Context, boardID string) (*Board, error) {
-	return Get[Board](c, ctx, "/1/boards/"+boardID)
+	return Get[Board](c, ctx, apiPath("1", "boards", boardID))
 }
 
 func (c *Client) ListBoards(ctx context.Context) ([]Board, error) {
@@ -78,7 +78,7 @@ func (c *Client) ListBoards(ctx context.Context) ([]Board, error) {
 }
 
 func (c *Client) DeleteBoard(ctx context.Context, boardID string) error {
-	return Delete(c, ctx, "/1/boards/"+boardID)
+	return Delete(c, ctx, apiPath("1", "boards", boardID))
 }
 
 func (c *Client) CreateBoard(ctx context.Context, board *Board) (*Board, error) {
@@ -86,25 +86,25 @@ func (c *Client) CreateBoard(ctx context.Context, board *Board) (*Board, error) 
 }
 
 func (c *Client) UpdateBoard(ctx context.Context, boardID string, board *Board) (*Board, error) {
-	return Update[Board](c, ctx, "/1/boards/"+boardID, board)
+	return Update[Board](c, ctx, apiPath("1", "boards", boardID), board)
 }
 
 func (c *Client) ListBoardViews(ctx context.Context, boardID string) ([]BoardView, error) {
-	return List[BoardView](c, ctx, "/1/boards/"+boardID+"/views")
+	return List[BoardView](c, ctx, apiPath("1", "boards", boardID, "views"))
 }
 
 func (c *Client) GetBoardView(ctx context.Context, boardID, viewID string) (*BoardView, error) {
-	return Get[BoardView](c, ctx, "/1/boards/"+boardID+"/views/"+viewID)
+	return Get[BoardView](c, ctx, apiPath("1", "boards", boardID, "views", viewID))
 }
 
 func (c *Client) CreateBoardView(ctx context.Context, boardID string, view *BoardView) (*BoardView, error) {
-	return Create[BoardView](c, ctx, "/1/boards/"+boardID+"/views", view)
+	return Create[BoardView](c, ctx, apiPath("1", "boards", boardID, "views"), view)
 }
 
 func (c *Client) UpdateBoardView(ctx context.Context, boardID, viewID string, view *BoardView) (*BoardView, error) {
-	return Update[BoardView](c, ctx, "/1/boards/"+boardID+"/views/"+viewID, view)
+	return Update[BoardView](c, ctx, apiPath("1", "boards", boardID, "views", viewID), view)
 }
 
 func (c *Client) DeleteBoardView(ctx context.Context, boardID, viewID string) error {
-	return Delete(c, ctx, "/1/boards/"+boardID+"/views/"+viewID)
+	return Delete(c, ctx, apiPath("1", "boards", boardID, "views", viewID))
 }

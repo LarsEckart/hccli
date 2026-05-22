@@ -15,17 +15,17 @@ type Marker struct {
 }
 
 func (c *Client) ListMarkers(ctx context.Context, dataset string) ([]Marker, error) {
-	return List[Marker](c, ctx, "/1/markers/"+dataset)
+	return List[Marker](c, ctx, apiPath("1", "markers", dataset))
 }
 
 func (c *Client) CreateMarker(ctx context.Context, dataset string, m *Marker) (*Marker, error) {
-	return Create[Marker](c, ctx, "/1/markers/"+dataset, m)
+	return Create[Marker](c, ctx, apiPath("1", "markers", dataset), m)
 }
 
 func (c *Client) UpdateMarker(ctx context.Context, dataset string, id string, m *Marker) (*Marker, error) {
-	return Update[Marker](c, ctx, "/1/markers/"+dataset+"/"+id, m)
+	return Update[Marker](c, ctx, apiPath("1", "markers", dataset, id), m)
 }
 
 func (c *Client) DeleteMarker(ctx context.Context, dataset string, id string) error {
-	return Delete(c, ctx, "/1/markers/"+dataset+"/"+id)
+	return Delete(c, ctx, apiPath("1", "markers", dataset, id))
 }

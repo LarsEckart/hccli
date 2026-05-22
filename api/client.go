@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"strings"
 	"time"
 )
 
@@ -27,6 +29,22 @@ func NewClient(apiKey string, timeout time.Duration) *Client {
 		BaseURL: defaultBaseURL,
 		HTTP:    &http.Client{Timeout: timeout},
 	}
+}
+
+func apiPath(segments ...string) string {
+	escaped := make([]string, len(segments))
+	for i, segment := range segments {
+		escaped[i] = url.PathEscape(segment)
+	}
+	return "/" + strings.Join(escaped, "/")
+}
+
+func apiPathWithQuery(segments []string, query url.Values) string {
+	path := apiPath(segments...)
+	if len(query) == 0 {
+		return path
+	}
+	return path + "?" + query.Encode()
 }
 
 func (c *Client) doBearer(req *http.Request, out any) error {

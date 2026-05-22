@@ -14,21 +14,21 @@ type Column struct {
 }
 
 func (c *Client) ListColumns(ctx context.Context, dataset string) ([]Column, error) {
-	return List[Column](c, ctx, "/1/columns/"+dataset)
+	return List[Column](c, ctx, apiPath("1", "columns", dataset))
 }
 
 func (c *Client) GetColumn(ctx context.Context, dataset string, id string) (*Column, error) {
-	return Get[Column](c, ctx, "/1/columns/"+dataset+"/"+id)
+	return Get[Column](c, ctx, apiPath("1", "columns", dataset, id))
 }
 
 func (c *Client) CreateColumn(ctx context.Context, dataset string, col *Column) (*Column, error) {
-	return Create[Column](c, ctx, "/1/columns/"+dataset, col)
+	return Create[Column](c, ctx, apiPath("1", "columns", dataset), col)
 }
 
 func (c *Client) UpdateColumn(ctx context.Context, dataset string, id string, col *Column) (*Column, error) {
-	return Update[Column](c, ctx, "/1/columns/"+dataset+"/"+id, col)
+	return Update[Column](c, ctx, apiPath("1", "columns", dataset, id), col)
 }
 
 func (c *Client) DeleteColumn(ctx context.Context, dataset string, id string) error {
-	return Delete(c, ctx, "/1/columns/"+dataset+"/"+id)
+	return Delete(c, ctx, apiPath("1", "columns", dataset, id))
 }

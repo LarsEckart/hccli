@@ -11,17 +11,17 @@ type MarkerSetting struct {
 }
 
 func (c *Client) ListMarkerSettings(ctx context.Context, dataset string) ([]MarkerSetting, error) {
-	return List[MarkerSetting](c, ctx, "/1/marker_settings/"+dataset)
+	return List[MarkerSetting](c, ctx, apiPath("1", "marker_settings", dataset))
 }
 
 func (c *Client) CreateMarkerSetting(ctx context.Context, dataset string, ms *MarkerSetting) (*MarkerSetting, error) {
-	return Create[MarkerSetting](c, ctx, "/1/marker_settings/"+dataset, ms)
+	return Create[MarkerSetting](c, ctx, apiPath("1", "marker_settings", dataset), ms)
 }
 
 func (c *Client) UpdateMarkerSetting(ctx context.Context, dataset string, id string, ms *MarkerSetting) (*MarkerSetting, error) {
-	return Update[MarkerSetting](c, ctx, "/1/marker_settings/"+dataset+"/"+id, ms)
+	return Update[MarkerSetting](c, ctx, apiPath("1", "marker_settings", dataset, id), ms)
 }
 
 func (c *Client) DeleteMarkerSetting(ctx context.Context, dataset string, id string) error {
-	return Delete(c, ctx, "/1/marker_settings/"+dataset+"/"+id)
+	return Delete(c, ctx, apiPath("1", "marker_settings", dataset, id))
 }

@@ -27,25 +27,25 @@ type SLOSLI struct {
 }
 
 func (c *Client) ListSLOs(ctx context.Context, dataset string) ([]SLO, error) {
-	return List[SLO](c, ctx, "/1/slos/"+dataset)
+	return List[SLO](c, ctx, apiPath("1", "slos", dataset))
 }
 
 func (c *Client) GetSLO(ctx context.Context, dataset string, id string) (*SLO, error) {
-	return Get[SLO](c, ctx, "/1/slos/"+dataset+"/"+id)
+	return Get[SLO](c, ctx, apiPath("1", "slos", dataset, id))
 }
 
 func (c *Client) GetSLODetailed(ctx context.Context, dataset string, id string) (*SLO, error) {
-	return Get[SLO](c, ctx, "/1/slos/"+dataset+"/"+id+"?detailed")
+	return Get[SLO](c, ctx, apiPath("1", "slos", dataset, id)+"?detailed")
 }
 
 func (c *Client) CreateSLO(ctx context.Context, dataset string, slo *SLO) (*SLO, error) {
-	return Create[SLO](c, ctx, "/1/slos/"+dataset, slo)
+	return Create[SLO](c, ctx, apiPath("1", "slos", dataset), slo)
 }
 
 func (c *Client) UpdateSLO(ctx context.Context, dataset string, id string, slo *SLO) (*SLO, error) {
-	return Update[SLO](c, ctx, "/1/slos/"+dataset+"/"+id, slo)
+	return Update[SLO](c, ctx, apiPath("1", "slos", dataset, id), slo)
 }
 
 func (c *Client) DeleteSLO(ctx context.Context, dataset string, id string) error {
-	return Delete(c, ctx, "/1/slos/"+dataset+"/"+id)
+	return Delete(c, ctx, apiPath("1", "slos", dataset, id))
 }

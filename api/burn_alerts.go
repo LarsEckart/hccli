@@ -2,8 +2,8 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"net/http"
+	"net/url"
 )
 
 type BurnAlert struct {
@@ -47,8 +47,8 @@ type WebhookVariable struct {
 }
 
 func (c *Client) ListBurnAlerts(ctx context.Context, dataset string, sloID string) ([]BurnAlert, error) {
-	url := fmt.Sprintf("%s/1/burn_alerts/%s?slo_id=%s", c.BaseURL, dataset, sloID)
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	path := apiPathWithQuery([]string{"1", "burn_alerts", dataset}, url.Values{"slo_id": {sloID}})
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.BaseURL+path, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -61,17 +61,17 @@ func (c *Client) ListBurnAlerts(ctx context.Context, dataset string, sloID strin
 }
 
 func (c *Client) GetBurnAlert(ctx context.Context, dataset string, id string) (*BurnAlert, error) {
-	return Get[BurnAlert](c, ctx, "/1/burn_alerts/"+dataset+"/"+id)
+	return Get[BurnAlert](c, ctx, apiPath("1", "burn_alerts", dataset, id))
 }
 
 func (c *Client) CreateBurnAlert(ctx context.Context, dataset string, ba *BurnAlert) (*BurnAlert, error) {
-	return Create[BurnAlert](c, ctx, "/1/burn_alerts/"+dataset, ba)
+	return Create[BurnAlert](c, ctx, apiPath("1", "burn_alerts", dataset), ba)
 }
 
 func (c *Client) UpdateBurnAlert(ctx context.Context, dataset string, id string, ba *BurnAlert) (*BurnAlert, error) {
-	return Update[BurnAlert](c, ctx, "/1/burn_alerts/"+dataset+"/"+id, ba)
+	return Update[BurnAlert](c, ctx, apiPath("1", "burn_alerts", dataset, id), ba)
 }
 
 func (c *Client) DeleteBurnAlert(ctx context.Context, dataset string, id string) error {
-	return Delete(c, ctx, "/1/burn_alerts/"+dataset+"/"+id)
+	return Delete(c, ctx, apiPath("1", "burn_alerts", dataset, id))
 }

@@ -47,15 +47,15 @@ type Having struct {
 }
 
 func (c *Client) GetQuery(ctx context.Context, dataset string, queryID string) (*Query, error) {
-	return Get[Query](c, ctx, "/1/queries/"+dataset+"/"+queryID)
+	return Get[Query](c, ctx, apiPath("1", "queries", dataset, queryID))
 }
 
 func (c *Client) CreateQuery(ctx context.Context, dataset string, query *Query) (*Query, error) {
-	return Create[Query](c, ctx, "/1/queries/"+dataset, query)
+	return Create[Query](c, ctx, apiPath("1", "queries", dataset), query)
 }
 
 func (c *Client) CreateQueryRaw(ctx context.Context, dataset string, body []byte) (map[string]any, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.BaseURL+"/1/queries/"+dataset, bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.BaseURL+apiPath("1", "queries", dataset), bytes.NewReader(body))
 	if err != nil {
 		return nil, err
 	}

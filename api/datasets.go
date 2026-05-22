@@ -22,7 +22,7 @@ func (c *Client) ListDatasets(ctx context.Context) ([]Dataset, error) {
 }
 
 func (c *Client) GetDataset(ctx context.Context, slug string) (*Dataset, error) {
-	return Get[Dataset](c, ctx, "/1/datasets/"+slug)
+	return Get[Dataset](c, ctx, apiPath("1", "datasets", slug))
 }
 
 func (c *Client) CreateDataset(ctx context.Context, ds *Dataset) (*Dataset, error) {
@@ -30,9 +30,9 @@ func (c *Client) CreateDataset(ctx context.Context, ds *Dataset) (*Dataset, erro
 }
 
 func (c *Client) UpdateDataset(ctx context.Context, slug string, ds *Dataset) (*Dataset, error) {
-	return Update[Dataset](c, ctx, "/1/datasets/"+slug, ds)
+	return Update[Dataset](c, ctx, apiPath("1", "datasets", slug), ds)
 }
 
 func (c *Client) DeleteDataset(ctx context.Context, slug string) error {
-	return Delete(c, ctx, "/1/datasets/"+slug)
+	return Delete(c, ctx, apiPath("1", "datasets", slug))
 }

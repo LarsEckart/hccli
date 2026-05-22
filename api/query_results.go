@@ -31,7 +31,7 @@ func (c *Client) CreateQueryResult(ctx context.Context, dataset string, queryID 
 		return nil, fmt.Errorf("encoding request: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.BaseURL+"/1/query_results/"+dataset, bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.BaseURL+apiPath("1", "query_results", dataset), bytes.NewReader(body))
 	if err != nil {
 		return nil, err
 	}
@@ -44,5 +44,5 @@ func (c *Client) CreateQueryResult(ctx context.Context, dataset string, queryID 
 }
 
 func (c *Client) GetQueryResult(ctx context.Context, dataset string, resultID string) (*QueryResult, error) {
-	return Get[QueryResult](c, ctx, "/1/query_results/"+dataset+"/"+resultID)
+	return Get[QueryResult](c, ctx, apiPath("1", "query_results", dataset, resultID))
 }
