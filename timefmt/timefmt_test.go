@@ -51,6 +51,7 @@ func TestParseTimeRange(t *testing.T) {
 		{"abc", "abc", 0, true},
 		{"reversed", "hours 4", 0, true},
 		{"negative", "-1 hours", 0, true},
+		{"negative plain", "-3600", 0, true},
 		{"unknown unit", "4 fortnights", 0, true},
 		{"decimal", "4.5 hours", 0, true},
 	}

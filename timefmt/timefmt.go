@@ -31,6 +31,9 @@ func ParseTimeRange(s string) (int, error) {
 
 	// Plain integer
 	if n, err := strconv.Atoi(lower); err == nil {
+		if n < 0 {
+			return 0, fmt.Errorf("time range must be positive: %q", s)
+		}
 		return n, nil
 	}
 
