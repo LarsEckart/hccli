@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"net/url"
 
 	"github.com/urfave/cli/v3"
 )
@@ -40,20 +41,25 @@ func GetTraceCmd() *cli.Command {
 			teamSlug := auth.Team.Slug
 			envSlug := auth.Environment.Slug
 
-			traceURL := fmt.Sprintf(
-				"https://ui.honeycomb.io/%s/environments/%s/datasets/%s/trace?trace_id=%s",
-				teamSlug, envSlug, dataset, traceID,
-			)
-
 			result := map[string]string{
 				"trace_id":    traceID,
 				"dataset":     dataset,
 				"team":        teamSlug,
 				"environment": envSlug,
-				"url":         traceURL,
+				"url":         traceUIURL(teamSlug, envSlug, dataset, traceID),
 			}
 
 			return printJSON(result)
 		},
 	}
+}
+
+func traceUIURL(teamSlug string, envSlug string, dataset string, traceID string) string {
+	return fmt.Sprintf(
+		"https://ui.honeycomb.io/%s/environments/%s/datasets/%s/trace?%s",
+		url.PathEscape(teamSlug),
+		url.PathEscape(envSlug),
+		url.PathEscape(dataset),
+		url.Values{"trace_id": []string{traceID}}.Encode(),
+	)
 }
