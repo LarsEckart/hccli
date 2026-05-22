@@ -105,6 +105,17 @@ hccli create-query \
   --having "MAX(duration_ms) > 1000"
 ```
 
+Filter values infer JSON types for common scalar values. Integers and floats are sent as JSON numbers, `true` and `false` are sent as booleans, and other values remain strings:
+
+```bash
+hccli create-query \
+  --dataset aws \
+  --calculation-op COUNT \
+  --filter "duration_ms > 1000" \
+  --filter "error = true" \
+  --filter "http.route contains /service/awards"
+```
+
 Create and execute a query in one step with `run-query`. It accepts the same query-building flags as `create-query`, plus `--poll-interval` and `--timeout` from `create-query-result`:
 
 ```bash

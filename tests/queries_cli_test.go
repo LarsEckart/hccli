@@ -116,6 +116,66 @@ func TestCreateQueryMultipleFiltersCLI_Smoke(t *testing.T) {
 	}
 }
 
+func TestCreateQueryTypedFilterValuesCLI(t *testing.T) {
+	var request map[string]any
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			t.Fatalf("failed to decode request body: %v", err)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(map[string]any{"id": "query-1"}); err != nil {
+			t.Fatalf("failed to encode response: %v", err)
+		}
+	}))
+	defer srv.Close()
+
+	stdout, stderr, code := runCLI(t,
+		"--api-key", "fake-key",
+		"--api-url", srv.URL,
+		"create-query",
+		"--dataset", "test-dataset",
+		"--calculation-op", "COUNT",
+		"--filter", "http.route contains /service/awards",
+		"--filter", "duration_ms > 1000",
+		"--filter", "ratio >= 1.25",
+		"--filter", "error = true",
+		"--filter", "name exists",
+	)
+	if code != 0 {
+		t.Fatalf("expected exit code 0, got %d\nstdout: %s\nstderr: %s", code, stdout, stderr)
+	}
+
+	filters, ok := request["filters"].([]any)
+	if !ok || len(filters) != 5 {
+		t.Fatalf("expected 5 filters, got %v", request["filters"])
+	}
+
+	stringFilter := filters[0].(map[string]any)
+	if stringFilter["value"] != "/service/awards" {
+		t.Errorf("expected string filter value, got %T %[1]v", stringFilter["value"])
+	}
+
+	intFilter := filters[1].(map[string]any)
+	if intFilter["value"] != float64(1000) {
+		t.Errorf("expected integer filter value as JSON number, got %T %[1]v", intFilter["value"])
+	}
+
+	floatFilter := filters[2].(map[string]any)
+	if floatFilter["value"] != float64(1.25) {
+		t.Errorf("expected float filter value as JSON number, got %T %[1]v", floatFilter["value"])
+	}
+
+	boolFilter := filters[3].(map[string]any)
+	if boolFilter["value"] != true {
+		t.Errorf("expected boolean filter value, got %T %[1]v", boolFilter["value"])
+	}
+
+	noValueFilter := filters[4].(map[string]any)
+	if _, ok := noValueFilter["value"]; ok {
+		t.Errorf("expected no value for exists filter, got %v", noValueFilter)
+	}
+}
+
 func TestCreateQueryMultipleBreakdownsCLI_Smoke(t *testing.T) {
 	dataset := requireDataset(t)
 

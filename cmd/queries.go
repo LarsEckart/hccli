@@ -110,8 +110,29 @@ func parseFilter(s string) (api.QueryFilter, error) {
 	if len(parts) < 3 || parts[2] == "" {
 		return api.QueryFilter{}, fmt.Errorf("invalid filter %q: operator %q requires a value", s, op)
 	}
-	f.Value = parts[2]
+	f.Value = parseFilterValue(parts[2])
 	return f, nil
+}
+
+func parseFilterValue(s string) any {
+	switch strings.ToLower(s) {
+	case "true":
+		return true
+	case "false":
+		return false
+	}
+
+	if strings.ContainsAny(s, ".eE") {
+		if v, err := strconv.ParseFloat(s, 64); err == nil {
+			return v
+		}
+		return s
+	}
+
+	if v, err := strconv.ParseInt(s, 10, 64); err == nil {
+		return v
+	}
+	return s
 }
 
 func parseOrder(s string) (api.Order, error) {
