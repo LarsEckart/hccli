@@ -12,7 +12,7 @@ func newClient(cmd *cli.Command) (*api.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	timeout := time.Duration(cmd.Int("timeout")) * time.Second
+	timeout := time.Duration(cmd.Root().Int("timeout")) * time.Second
 	client := api.NewClient(credentials.APIKey, timeout)
 	if credentials.APIURL != "" {
 		client.BaseURL = credentials.APIURL
