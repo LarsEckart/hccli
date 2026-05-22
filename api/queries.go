@@ -40,7 +40,7 @@ type Order struct {
 }
 
 type Having struct {
-	CalculateOp string `json:"calculate_op"`
+	CalculateOp string `json:"calculate_op,omitempty"`
 	Column      string `json:"column,omitempty"`
 	Op          string `json:"op"`
 	Value       any    `json:"value"`
