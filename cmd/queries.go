@@ -548,12 +548,12 @@ func CreateQueryCmd() *cli.Command {
 		Description: queryBuildDescription(),
 		Flags:       queryBuildFlags(),
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client, err := newClient(cmd)
+			input, err := buildQueryInputFromFlags(cmd)
 			if err != nil {
 				return err
 			}
 
-			input, err := buildQueryInputFromFlags(cmd)
+			client, err := newClient(cmd)
 			if err != nil {
 				return err
 			}

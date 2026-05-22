@@ -378,6 +378,26 @@ func TestCreateQueryInvalidQueryJSONCLI(t *testing.T) {
 	}
 }
 
+func TestCreateQueryMissingQueryJSONFailsBeforeAuthCLI(t *testing.T) {
+	missingPath := filepath.Join(t.TempDir(), "missing.json")
+
+	_, stderr, code := runCLIWithOptions(t,
+		cliRunOptions{Env: isolatedConfigEnv(t)},
+		"create-query",
+		"--dataset", "test-dataset",
+		"--query-json", missingPath,
+	)
+	if code == 0 {
+		t.Fatal("expected non-zero exit code for missing query JSON")
+	}
+	if strings.Contains(stderr, "api-key") || strings.Contains(stderr, "API key") {
+		t.Fatalf("expected missing query JSON error before auth, got: %s", stderr)
+	}
+	if !strings.Contains(stderr, "reading query-json") {
+		t.Errorf("expected missing query JSON error, got: %s", stderr)
+	}
+}
+
 func TestCreateQueryQueryJSONRejectsQueryFlagsCLI(t *testing.T) {
 	queryPath := filepath.Join(t.TempDir(), "query.json")
 	if err := os.WriteFile(queryPath, []byte(`{"calculations":[{"op":"COUNT"}]}`), 0o600); err != nil {
