@@ -67,6 +67,44 @@ Use `HCCLI_CONFIG_DIR` to override the profile storage directory, primarily for 
 
 Run `hccli --help` for full command reference.
 
+### Query examples
+
+Create a top-N query by ordering on a calculation and limiting the result groups:
+
+```bash
+hccli create-query \
+  --dataset aws \
+  --calculation-op COUNT \
+  --breakdown service.name \
+  --order "COUNT desc" \
+  --limit 10
+```
+
+Find the single slowest request shape by grouping on trace fields and ordering by max duration:
+
+```bash
+hccli create-query \
+  --dataset aws \
+  --calculation-op MAX \
+  --calculation-column duration_ms \
+  --filter "http.route contains /service/awards" \
+  --breakdown trace.trace_id \
+  --breakdown trace.span_id \
+  --breakdown http.route \
+  --order "MAX(duration_ms) desc" \
+  --limit 1
+```
+
+Filter grouped results with a having clause:
+
+```bash
+hccli create-query \
+  --dataset aws \
+  --calculation-op MAX \
+  --calculation-column duration_ms \
+  --having "MAX(duration_ms) > 1000"
+```
+
 ## Large Output
 
 When JSON output exceeds 30KB, hccli writes the full output to a temp file and prints a warning to stderr:

@@ -1,6 +1,9 @@
 package main_test
 
 import (
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 )
@@ -139,6 +142,81 @@ func TestCreateQueryMultipleBreakdownsCLI_Smoke(t *testing.T) {
 	}
 }
 
+func TestCreateQueryOrderLimitHavingCLI(t *testing.T) {
+	var request map[string]any
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			t.Errorf("expected POST, got %s", r.Method)
+		}
+		if r.URL.Path != "/1/queries/test-dataset" {
+			t.Errorf("unexpected path: %s", r.URL.Path)
+		}
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			t.Fatalf("failed to decode request body: %v", err)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		response := map[string]any{"id": "query-1"}
+		for k, v := range request {
+			response[k] = v
+		}
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			t.Fatalf("failed to encode response: %v", err)
+		}
+	}))
+	defer srv.Close()
+
+	stdout, stderr, code := runCLI(t,
+		"--api-key", "fake-key",
+		"--api-url", srv.URL,
+		"create-query",
+		"--dataset", "test-dataset",
+		"--calculation-op", "MAX",
+		"--calculation-column", "duration_ms",
+		"--breakdown", "trace.trace_id",
+		"--order", "MAX(duration_ms) desc",
+		"--order", "trace.trace_id asc",
+		"--limit", "1",
+		"--having", "MAX(duration_ms) > 1000",
+		"--having", "MAX(duration_ms) <= 5000",
+	)
+	if code != 0 {
+		t.Fatalf("expected exit code 0, got %d\nstdout: %s\nstderr: %s", code, stdout, stderr)
+	}
+
+	if request["limit"] != float64(1) {
+		t.Fatalf("expected limit 1, got %v", request["limit"])
+	}
+
+	orders, ok := request["orders"].([]any)
+	if !ok || len(orders) != 2 {
+		t.Fatalf("expected 2 orders, got %v", request["orders"])
+	}
+	firstOrder := orders[0].(map[string]any)
+	if firstOrder["op"] != "MAX" || firstOrder["column"] != "duration_ms" || firstOrder["order"] != "descending" {
+		t.Errorf("unexpected first order: %v", firstOrder)
+	}
+	secondOrder := orders[1].(map[string]any)
+	if _, ok := secondOrder["op"]; ok {
+		t.Errorf("expected column order to omit op, got %v", secondOrder)
+	}
+	if secondOrder["column"] != "trace.trace_id" || secondOrder["order"] != "ascending" {
+		t.Errorf("unexpected second order: %v", secondOrder)
+	}
+
+	havings, ok := request["havings"].([]any)
+	if !ok || len(havings) != 2 {
+		t.Fatalf("expected 2 havings, got %v", request["havings"])
+	}
+	firstHaving := havings[0].(map[string]any)
+	if firstHaving["calculate_op"] != "MAX" || firstHaving["column"] != "duration_ms" || firstHaving["op"] != ">" || firstHaving["value"] != float64(1000) {
+		t.Errorf("unexpected first having: %v", firstHaving)
+	}
+	secondHaving := havings[1].(map[string]any)
+	if secondHaving["calculate_op"] != "MAX" || secondHaving["column"] != "duration_ms" || secondHaving["op"] != "<=" || secondHaving["value"] != float64(5000) {
+		t.Errorf("unexpected second having: %v", secondHaving)
+	}
+}
+
 func TestCreateQueryInvalidFilterCLI(t *testing.T) {
 	_, stderr, exitCode := runCLI(t,
 		"--api-key", "fake-key",
@@ -185,5 +263,114 @@ func TestCreateQueryMismatchedCalculationsCLI(t *testing.T) {
 	}
 	if !strings.Contains(stderr, "must match") {
 		t.Errorf("expected error about mismatched counts, got: %s", stderr)
+	}
+}
+
+func TestCreateQueryInvalidOrderCLI(t *testing.T) {
+	called := false
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
+		http.Error(w, "should not be called", http.StatusInternalServerError)
+	}))
+	defer srv.Close()
+
+	_, stderr, exitCode := runCLI(t,
+		"--api-key", "fake-key",
+		"--api-url", srv.URL,
+		"create-query",
+		"--dataset", "test",
+		"--calculation-op", "COUNT",
+		"--order", "MAX(duration_ms) sideways",
+	)
+	if exitCode == 0 {
+		t.Fatal("expected non-zero exit code for invalid order")
+	}
+	if called {
+		t.Fatal("expected invalid order to fail before calling API")
+	}
+	if !strings.Contains(stderr, "invalid order") {
+		t.Errorf("expected error about invalid order, got: %s", stderr)
+	}
+}
+
+func TestCreateQueryOrderMustReferenceBreakdownCLI(t *testing.T) {
+	called := false
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
+		http.Error(w, "should not be called", http.StatusInternalServerError)
+	}))
+	defer srv.Close()
+
+	_, stderr, exitCode := runCLI(t,
+		"--api-key", "fake-key",
+		"--api-url", srv.URL,
+		"create-query",
+		"--dataset", "test",
+		"--calculation-op", "COUNT",
+		"--breakdown", "service.name",
+		"--order", "duration_ms desc",
+	)
+	if exitCode == 0 {
+		t.Fatal("expected non-zero exit code for order outside breakdowns")
+	}
+	if called {
+		t.Fatal("expected invalid order to fail before calling API")
+	}
+	if !strings.Contains(stderr, "invalid order") || !strings.Contains(stderr, "breakdown") {
+		t.Errorf("expected error about order requiring a breakdown, got: %s", stderr)
+	}
+}
+
+func TestCreateQueryInvalidHavingCLI(t *testing.T) {
+	called := false
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
+		http.Error(w, "should not be called", http.StatusInternalServerError)
+	}))
+	defer srv.Close()
+
+	_, stderr, exitCode := runCLI(t,
+		"--api-key", "fake-key",
+		"--api-url", srv.URL,
+		"create-query",
+		"--dataset", "test",
+		"--calculation-op", "COUNT",
+		"--having", "MAX(duration_ms) above 1000",
+	)
+	if exitCode == 0 {
+		t.Fatal("expected non-zero exit code for invalid having")
+	}
+	if called {
+		t.Fatal("expected invalid having to fail before calling API")
+	}
+	if !strings.Contains(stderr, "invalid having") {
+		t.Errorf("expected error about invalid having, got: %s", stderr)
+	}
+}
+
+func TestCreateQueryHavingMustReferenceCalculationCLI(t *testing.T) {
+	called := false
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
+		http.Error(w, "should not be called", http.StatusInternalServerError)
+	}))
+	defer srv.Close()
+
+	_, stderr, exitCode := runCLI(t,
+		"--api-key", "fake-key",
+		"--api-url", srv.URL,
+		"create-query",
+		"--dataset", "test",
+		"--calculation-op", "COUNT",
+		"--having", "MAX(duration_ms) > 1000",
+	)
+	if exitCode == 0 {
+		t.Fatal("expected non-zero exit code for having outside calculations")
+	}
+	if called {
+		t.Fatal("expected invalid having to fail before calling API")
+	}
+	if !strings.Contains(stderr, "invalid having") || !strings.Contains(stderr, "calculation") {
+		t.Errorf("expected error about having requiring a calculation, got: %s", stderr)
 	}
 }

@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -15,6 +16,49 @@ import (
 var noValueOps = map[string]bool{
 	"exists":         true,
 	"does-not-exist": true,
+}
+
+var calculationOps = map[string]bool{
+	"AVG":            true,
+	"CONCURRENCY":    true,
+	"COUNT":          true,
+	"COUNT_DISTINCT": true,
+	"HEATMAP":        true,
+	"MAX":            true,
+	"MIN":            true,
+	"P001":           true,
+	"P01":            true,
+	"P05":            true,
+	"P10":            true,
+	"P20":            true,
+	"P25":            true,
+	"P50":            true,
+	"P75":            true,
+	"P80":            true,
+	"P90":            true,
+	"P95":            true,
+	"P99":            true,
+	"P999":           true,
+	"RATE_AVG":       true,
+	"RATE_MAX":       true,
+	"RATE_SUM":       true,
+	"SUM":            true,
+}
+
+var orderDirections = map[string]string{
+	"asc":        "ascending",
+	"ascending":  "ascending",
+	"desc":       "descending",
+	"descending": "descending",
+}
+
+var havingOps = map[string]bool{
+	"=":  true,
+	"!=": true,
+	">":  true,
+	">=": true,
+	"<":  true,
+	"<=": true,
 }
 
 // parseFilter parses a filter string in the form "column op [value]".
@@ -44,6 +88,160 @@ func parseFilter(s string) (api.QueryFilter, error) {
 	}
 	f.Value = parts[2]
 	return f, nil
+}
+
+func parseOrder(s string) (api.Order, error) {
+	parts := strings.Fields(strings.TrimSpace(s))
+	if len(parts) != 2 {
+		return api.Order{}, fmt.Errorf("invalid order %q: expected \"term asc|desc\" (for example, \"MAX(duration_ms) desc\")", s)
+	}
+
+	direction, ok := orderDirections[strings.ToLower(parts[1])]
+	if !ok {
+		return api.Order{}, fmt.Errorf("invalid order %q: direction must be asc, ascending, desc, or descending", s)
+	}
+
+	op, column, err := parseQueryTerm(parts[0], true)
+	if err != nil {
+		return api.Order{}, fmt.Errorf("invalid order %q: %w", s, err)
+	}
+
+	return api.Order{
+		Op:     op,
+		Column: column,
+		Order:  direction,
+	}, nil
+}
+
+func parseHaving(s string) (api.Having, error) {
+	parts := strings.Fields(strings.TrimSpace(s))
+	if len(parts) != 3 {
+		return api.Having{}, fmt.Errorf("invalid having %q: expected \"CALC(column) op number\" (for example, \"MAX(duration_ms) > 1000\")", s)
+	}
+
+	if !havingOps[parts[1]] {
+		return api.Having{}, fmt.Errorf("invalid having %q: operator must be one of =, !=, >, >=, <, <=", s)
+	}
+
+	op, column, err := parseQueryTerm(parts[0], false)
+	if err != nil {
+		return api.Having{}, fmt.Errorf("invalid having %q: %w", s, err)
+	}
+	if op == "HEATMAP" {
+		return api.Having{}, fmt.Errorf("invalid having %q: HEATMAP is not supported in havings", s)
+	}
+
+	value, err := parseNumericValue(parts[2])
+	if err != nil {
+		return api.Having{}, fmt.Errorf("invalid having %q: value must be a number", s)
+	}
+
+	return api.Having{
+		CalculateOp: op,
+		Column:      column,
+		Op:          parts[1],
+		Value:       value,
+	}, nil
+}
+
+func parseQueryTerm(s string, allowPlainColumn bool) (op string, column string, err error) {
+	term := strings.TrimSpace(s)
+	if term == "" {
+		return "", "", fmt.Errorf("term is empty")
+	}
+
+	if open := strings.Index(term, "("); open >= 0 {
+		if !strings.HasSuffix(term, ")") || strings.Count(term, "(") != 1 || strings.Count(term, ")") != 1 {
+			return "", "", fmt.Errorf("term must use CALC(column) syntax")
+		}
+		rawOp := strings.ToUpper(strings.TrimSpace(term[:open]))
+		if !calculationOps[rawOp] {
+			return "", "", fmt.Errorf("unknown calculation op %q", rawOp)
+		}
+		rawColumn := strings.TrimSpace(term[open+1 : len(term)-1])
+		if rawColumn == "" && rawOp != "COUNT" && rawOp != "CONCURRENCY" {
+			return "", "", fmt.Errorf("calculation op %s requires a column", rawOp)
+		}
+		return rawOp, rawColumn, nil
+	}
+
+	rawOp := strings.ToUpper(term)
+	if calculationOps[rawOp] && rawOp == term {
+		return rawOp, "", nil
+	}
+	if allowPlainColumn {
+		return "", term, nil
+	}
+	return "", "", fmt.Errorf("term must be a calculation like MAX(duration_ms) or COUNT")
+}
+
+func parseNumericValue(s string) (any, error) {
+	if strings.ContainsAny(s, ".eE") {
+		v, err := strconv.ParseFloat(s, 64)
+		if err != nil {
+			return nil, err
+		}
+		return v, nil
+	}
+	v, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	return v, nil
+}
+
+func validateQueryReferences(query *api.Query) error {
+	breakdowns := make(map[string]bool, len(query.Breakdowns))
+	for _, breakdown := range query.Breakdowns {
+		breakdowns[breakdown] = true
+	}
+
+	calculations := make(map[string]bool, len(query.Calculations))
+	for _, calc := range query.Calculations {
+		calculations[calculationKey(calc.Op, calc.Column)] = true
+	}
+
+	for _, order := range query.Orders {
+		if order.Op != "" {
+			if !calculations[calculationKey(order.Op, order.Column)] {
+				return fmt.Errorf("invalid order %q: calculation must match one of the query calculations", formatOrderTerm(order))
+			}
+			continue
+		}
+		if !breakdowns[order.Column] {
+			return fmt.Errorf("invalid order %q: column must match one of the query breakdowns", order.Column)
+		}
+	}
+
+	for _, having := range query.Havings {
+		if !calculations[calculationKey(having.CalculateOp, having.Column)] {
+			return fmt.Errorf("invalid having %q: calculation must match one of the query calculations", formatHavingTerm(having))
+		}
+	}
+
+	return nil
+}
+
+func calculationKey(op, column string) string {
+	return strings.ToUpper(op) + "\x00" + column
+}
+
+func formatOrderTerm(order api.Order) string {
+	if order.Op == "" {
+		return order.Column
+	}
+	return formatCalculationTerm(order.Op, order.Column)
+}
+
+func formatHavingTerm(having api.Having) string {
+	return formatCalculationTerm(having.CalculateOp, having.Column)
+}
+
+func formatCalculationTerm(op, column string) string {
+	if column == "" {
+		return strings.ToUpper(op)
+	}
+	return fmt.Sprintf("%s(%s)", strings.ToUpper(op), column)
 }
 
 func GetQueryCmd() *cli.Command {
@@ -84,6 +282,10 @@ func CreateQueryCmd() *cli.Command {
 		Name:     "create-query",
 		Category: "Queries",
 		Usage:    "Create a new query",
+		Description: `Examples:
+  hccli create-query --dataset aws --calculation-op COUNT --breakdown service.name --order "COUNT desc" --limit 10
+  hccli create-query --dataset aws --calculation-op MAX --calculation-column duration_ms --breakdown trace.trace_id --order "MAX(duration_ms) desc" --limit 1
+  hccli create-query --dataset aws --calculation-op MAX --calculation-column duration_ms --having "MAX(duration_ms) > 1000"`,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "dataset",
@@ -110,6 +312,18 @@ func CreateQueryCmd() *cli.Command {
 			&cli.StringFlag{
 				Name:  "filter-combination",
 				Usage: "How to combine filters: AND (default) or OR",
+			},
+			&cli.StringSliceFlag{
+				Name:  "order",
+				Usage: `Order in "term asc|desc" form; repeat for multiple orders (e.g. --order "MAX(duration_ms) desc" --order "trace.trace_id asc")`,
+			},
+			&cli.IntFlag{
+				Name:  "limit",
+				Usage: "Maximum number of unique groups returned in results (1-1000)",
+			},
+			&cli.StringSliceFlag{
+				Name:  "having",
+				Usage: `Having clause in "CALC(column) op number" form; repeat for multiple havings (e.g. --having "MAX(duration_ms) > 1000")`,
 			},
 			&cli.StringFlag{
 				Name:  "time-range",
@@ -168,6 +382,34 @@ func CreateQueryCmd() *cli.Command {
 
 			if v := cmd.String("filter-combination"); v != "" {
 				query.FilterCombination = v
+			}
+
+			for _, raw := range cmd.StringSlice("order") {
+				order, err := parseOrder(raw)
+				if err != nil {
+					return err
+				}
+				query.Orders = append(query.Orders, order)
+			}
+
+			if cmd.IsSet("limit") {
+				limit := cmd.Int("limit")
+				if limit < 1 || limit > 1000 {
+					return fmt.Errorf("invalid limit %d: must be between 1 and 1000", limit)
+				}
+				query.Limit = limit
+			}
+
+			for _, raw := range cmd.StringSlice("having") {
+				having, err := parseHaving(raw)
+				if err != nil {
+					return err
+				}
+				query.Havings = append(query.Havings, having)
+			}
+
+			if err := validateQueryReferences(query); err != nil {
+				return err
 			}
 
 			loc := time.UTC
