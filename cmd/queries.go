@@ -277,172 +277,189 @@ func GetQueryCmd() *cli.Command {
 	}
 }
 
-func CreateQueryCmd() *cli.Command {
-	return &cli.Command{
-		Name:     "create-query",
-		Category: "Queries",
-		Usage:    "Create a new query",
-		Description: `Examples:
+func queryBuildFlags() []cli.Flag {
+	return []cli.Flag{
+		&cli.StringFlag{
+			Name:     "dataset",
+			Usage:    "Dataset slug",
+			Required: true,
+		},
+		&cli.StringSliceFlag{
+			Name:     "calculation-op",
+			Usage:    "Calculation operation (e.g. COUNT, AVG, P99); repeat for multiple calculations",
+			Required: true,
+		},
+		&cli.StringSliceFlag{
+			Name:  "calculation-column",
+			Usage: "Calculation column (use empty string for COUNT); repeat to match each --calculation-op",
+		},
+		&cli.StringSliceFlag{
+			Name:  "breakdown",
+			Usage: "Breakdown column; repeat for multiple dimensions",
+		},
+		&cli.StringSliceFlag{
+			Name:  "filter",
+			Usage: `Filter in "column op [value]" form; repeat for multiple filters (e.g. --filter "duration_ms > 100" --filter "name exists")`,
+		},
+		&cli.StringFlag{
+			Name:  "filter-combination",
+			Usage: "How to combine filters: AND (default) or OR",
+		},
+		&cli.StringSliceFlag{
+			Name:  "order",
+			Usage: `Order in "term asc|desc" form; repeat for multiple orders (e.g. --order "MAX(duration_ms) desc" --order "trace.trace_id asc")`,
+		},
+		&cli.IntFlag{
+			Name:  "limit",
+			Usage: "Maximum number of unique groups returned in results (1-1000)",
+		},
+		&cli.StringSliceFlag{
+			Name:  "having",
+			Usage: `Having clause in "CALC(column) op number" form; repeat for multiple havings (e.g. --having "MAX(duration_ms) > 1000")`,
+		},
+		&cli.StringFlag{
+			Name:  "time-range",
+			Usage: `Time range (e.g. 3600, "4 hours", "last week")`,
+		},
+		&cli.StringFlag{
+			Name:  "from",
+			Usage: `Start time (e.g. "2024-02-11 18:00", "2024-02-11T18:00:00Z")`,
+		},
+		&cli.StringFlag{
+			Name:  "to",
+			Usage: `End time (e.g. "2024-02-11 18:45", "2024-02-11T18:00:00Z")`,
+		},
+		&cli.StringFlag{
+			Name:  "timezone",
+			Usage: `Timezone for parsing dates (e.g. "America/New_York", default UTC)`,
+		},
+	}
+}
+
+func queryBuildDescription() string {
+	return `Examples:
   hccli create-query --dataset aws --calculation-op COUNT --breakdown service.name --order "COUNT desc" --limit 10
   hccli create-query --dataset aws --calculation-op MAX --calculation-column duration_ms --breakdown trace.trace_id --order "MAX(duration_ms) desc" --limit 1
-  hccli create-query --dataset aws --calculation-op MAX --calculation-column duration_ms --having "MAX(duration_ms) > 1000"`,
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:     "dataset",
-				Usage:    "Dataset slug",
-				Required: true,
-			},
-			&cli.StringSliceFlag{
-				Name:     "calculation-op",
-				Usage:    "Calculation operation (e.g. COUNT, AVG, P99); repeat for multiple calculations",
-				Required: true,
-			},
-			&cli.StringSliceFlag{
-				Name:  "calculation-column",
-				Usage: "Calculation column (use empty string for COUNT); repeat to match each --calculation-op",
-			},
-			&cli.StringSliceFlag{
-				Name:  "breakdown",
-				Usage: "Breakdown column; repeat for multiple dimensions",
-			},
-			&cli.StringSliceFlag{
-				Name:  "filter",
-				Usage: `Filter in "column op [value]" form; repeat for multiple filters (e.g. --filter "duration_ms > 100" --filter "name exists")`,
-			},
-			&cli.StringFlag{
-				Name:  "filter-combination",
-				Usage: "How to combine filters: AND (default) or OR",
-			},
-			&cli.StringSliceFlag{
-				Name:  "order",
-				Usage: `Order in "term asc|desc" form; repeat for multiple orders (e.g. --order "MAX(duration_ms) desc" --order "trace.trace_id asc")`,
-			},
-			&cli.IntFlag{
-				Name:  "limit",
-				Usage: "Maximum number of unique groups returned in results (1-1000)",
-			},
-			&cli.StringSliceFlag{
-				Name:  "having",
-				Usage: `Having clause in "CALC(column) op number" form; repeat for multiple havings (e.g. --having "MAX(duration_ms) > 1000")`,
-			},
-			&cli.StringFlag{
-				Name:  "time-range",
-				Usage: `Time range (e.g. 3600, "4 hours", "last week")`,
-			},
-			&cli.StringFlag{
-				Name:  "from",
-				Usage: `Start time (e.g. "2024-02-11 18:00", "2024-02-11T18:00:00Z")`,
-			},
-			&cli.StringFlag{
-				Name:  "to",
-				Usage: `End time (e.g. "2024-02-11 18:45", "2024-02-11T18:00:00Z")`,
-			},
-			&cli.StringFlag{
-				Name:  "timezone",
-				Usage: `Timezone for parsing dates (e.g. "America/New_York", default UTC)`,
-			},
-		},
+  hccli create-query --dataset aws --calculation-op MAX --calculation-column duration_ms --having "MAX(duration_ms) > 1000"`
+}
+
+func buildQueryFromFlags(cmd *cli.Command) (*api.Query, error) {
+	ops := cmd.StringSlice("calculation-op")
+	cols := cmd.StringSlice("calculation-column")
+
+	if len(cols) > 0 && len(cols) != len(ops) {
+		return nil, fmt.Errorf("number of --calculation-column values (%d) must match --calculation-op values (%d)", len(cols), len(ops))
+	}
+
+	var calcs []api.Calculation
+	for i, op := range ops {
+		c := api.Calculation{Op: op}
+		if i < len(cols) && cols[i] != "" {
+			c.Column = cols[i]
+		}
+		calcs = append(calcs, c)
+	}
+
+	query := &api.Query{
+		Calculations: calcs,
+	}
+
+	if v := cmd.StringSlice("breakdown"); len(v) > 0 {
+		query.Breakdowns = v
+	}
+
+	for _, raw := range cmd.StringSlice("filter") {
+		f, err := parseFilter(raw)
+		if err != nil {
+			return nil, err
+		}
+		query.Filters = append(query.Filters, f)
+	}
+
+	if v := cmd.String("filter-combination"); v != "" {
+		query.FilterCombination = v
+	}
+
+	for _, raw := range cmd.StringSlice("order") {
+		order, err := parseOrder(raw)
+		if err != nil {
+			return nil, err
+		}
+		query.Orders = append(query.Orders, order)
+	}
+
+	if cmd.IsSet("limit") {
+		limit := cmd.Int("limit")
+		if limit < 1 || limit > 1000 {
+			return nil, fmt.Errorf("invalid limit %d: must be between 1 and 1000", limit)
+		}
+		query.Limit = limit
+	}
+
+	for _, raw := range cmd.StringSlice("having") {
+		having, err := parseHaving(raw)
+		if err != nil {
+			return nil, err
+		}
+		query.Havings = append(query.Havings, having)
+	}
+
+	if err := validateQueryReferences(query); err != nil {
+		return nil, err
+	}
+
+	loc := time.UTC
+	if tz := cmd.String("timezone"); tz != "" {
+		var err error
+		loc, err = time.LoadLocation(tz)
+		if err != nil {
+			return nil, fmt.Errorf("invalid timezone %q: %w", tz, err)
+		}
+	}
+
+	if v := cmd.String("time-range"); v != "" {
+		tr, err := timefmt.ParseTimeRange(v)
+		if err != nil {
+			return nil, fmt.Errorf("invalid time-range %q: %w", v, err)
+		}
+		query.TimeRange = tr
+	}
+
+	if v := cmd.String("from"); v != "" {
+		ts, err := timefmt.ParseTimestamp(v, loc)
+		if err != nil {
+			return nil, fmt.Errorf("invalid from time %q: %w", v, err)
+		}
+		query.StartTime = int(ts)
+	}
+
+	if v := cmd.String("to"); v != "" {
+		ts, err := timefmt.ParseTimestamp(v, loc)
+		if err != nil {
+			return nil, fmt.Errorf("invalid to time %q: %w", v, err)
+		}
+		query.EndTime = int(ts)
+	}
+
+	return query, nil
+}
+
+func CreateQueryCmd() *cli.Command {
+	return &cli.Command{
+		Name:        "create-query",
+		Category:    "Queries",
+		Usage:       "Create a new query",
+		Description: queryBuildDescription(),
+		Flags:       queryBuildFlags(),
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			client, err := newClient(cmd)
 			if err != nil {
 				return err
 			}
 
-			ops := cmd.StringSlice("calculation-op")
-			cols := cmd.StringSlice("calculation-column")
-
-			if len(cols) > 0 && len(cols) != len(ops) {
-				return fmt.Errorf("number of --calculation-column values (%d) must match --calculation-op values (%d)", len(cols), len(ops))
-			}
-
-			var calcs []api.Calculation
-			for i, op := range ops {
-				c := api.Calculation{Op: op}
-				if i < len(cols) && cols[i] != "" {
-					c.Column = cols[i]
-				}
-				calcs = append(calcs, c)
-			}
-
-			query := &api.Query{
-				Calculations: calcs,
-			}
-
-			if v := cmd.StringSlice("breakdown"); len(v) > 0 {
-				query.Breakdowns = v
-			}
-
-			for _, raw := range cmd.StringSlice("filter") {
-				f, err := parseFilter(raw)
-				if err != nil {
-					return err
-				}
-				query.Filters = append(query.Filters, f)
-			}
-
-			if v := cmd.String("filter-combination"); v != "" {
-				query.FilterCombination = v
-			}
-
-			for _, raw := range cmd.StringSlice("order") {
-				order, err := parseOrder(raw)
-				if err != nil {
-					return err
-				}
-				query.Orders = append(query.Orders, order)
-			}
-
-			if cmd.IsSet("limit") {
-				limit := cmd.Int("limit")
-				if limit < 1 || limit > 1000 {
-					return fmt.Errorf("invalid limit %d: must be between 1 and 1000", limit)
-				}
-				query.Limit = limit
-			}
-
-			for _, raw := range cmd.StringSlice("having") {
-				having, err := parseHaving(raw)
-				if err != nil {
-					return err
-				}
-				query.Havings = append(query.Havings, having)
-			}
-
-			if err := validateQueryReferences(query); err != nil {
+			query, err := buildQueryFromFlags(cmd)
+			if err != nil {
 				return err
-			}
-
-			loc := time.UTC
-			if tz := cmd.String("timezone"); tz != "" {
-				var err error
-				loc, err = time.LoadLocation(tz)
-				if err != nil {
-					return fmt.Errorf("invalid timezone %q: %w", tz, err)
-				}
-			}
-
-			if v := cmd.String("time-range"); v != "" {
-				tr, err := timefmt.ParseTimeRange(v)
-				if err != nil {
-					return fmt.Errorf("invalid time-range %q: %w", v, err)
-				}
-				query.TimeRange = tr
-			}
-
-			if v := cmd.String("from"); v != "" {
-				ts, err := timefmt.ParseTimestamp(v, loc)
-				if err != nil {
-					return fmt.Errorf("invalid from time %q: %w", v, err)
-				}
-				query.StartTime = int(ts)
-			}
-
-			if v := cmd.String("to"); v != "" {
-				ts, err := timefmt.ParseTimestamp(v, loc)
-				if err != nil {
-					return fmt.Errorf("invalid to time %q: %w", v, err)
-				}
-				query.EndTime = int(ts)
 			}
 
 			created, err := client.CreateQuery(ctx, cmd.String("dataset"), query)
@@ -451,6 +468,50 @@ func CreateQueryCmd() *cli.Command {
 			}
 
 			return printJSON(created)
+		},
+	}
+}
+
+func RunQueryCmd() *cli.Command {
+	flags := queryBuildFlags()
+	flags = append(flags, queryResultPollingFlags()...)
+
+	return &cli.Command{
+		Name:     "run-query",
+		Category: "Query Results",
+		Usage:    "Create a query and return results (polls until complete)",
+		Description: `Examples:
+  hccli run-query --dataset aws --calculation-op COUNT --breakdown service.name --order "COUNT desc" --limit 10
+  hccli run-query --dataset aws --calculation-op MAX --calculation-column duration_ms --filter "http.route contains /service/awards" --time-range "30 minutes"`,
+		Flags: flags,
+		Action: func(ctx context.Context, cmd *cli.Command) error {
+			query, err := buildQueryFromFlags(cmd)
+			if err != nil {
+				return err
+			}
+
+			client, err := newClient(cmd)
+			if err != nil {
+				return err
+			}
+
+			dataset := cmd.String("dataset")
+			created, err := client.CreateQuery(ctx, dataset, query)
+			if err != nil {
+				return err
+			}
+			if created.ID == "" {
+				return fmt.Errorf("created query response did not include an id")
+			}
+
+			pollInterval := time.Duration(cmd.Int("poll-interval")) * time.Second
+			timeout := time.Duration(cmd.Int("timeout")) * time.Second
+			result, err := pollQueryResult(ctx, client, dataset, created.ID, pollInterval, timeout)
+			if err != nil {
+				return err
+			}
+
+			return printJSON(result)
 		},
 	}
 }

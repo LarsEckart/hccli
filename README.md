@@ -105,6 +105,18 @@ hccli create-query \
   --having "MAX(duration_ms) > 1000"
 ```
 
+Create and execute a query in one step with `run-query`. It accepts the same query-building flags as `create-query`, plus `--poll-interval` and `--timeout` from `create-query-result`:
+
+```bash
+hccli run-query \
+  --dataset aws \
+  --calculation-op MAX \
+  --calculation-column duration_ms \
+  --filter "http.route contains /service/awards" \
+  --time-range "30 minutes" \
+  --timeout 60
+```
+
 ## Large Output
 
 When JSON output exceeds 30KB, hccli writes the full output to a temp file and prints a warning to stderr:

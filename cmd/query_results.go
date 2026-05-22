@@ -10,33 +10,73 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
+func queryResultPollingFlags() []cli.Flag {
+	return []cli.Flag{
+		&cli.IntFlag{
+			Name:  "poll-interval",
+			Usage: "Seconds between polling attempts",
+			Value: 2,
+		},
+		&cli.IntFlag{
+			Name:  "timeout",
+			Usage: "Maximum seconds to wait for results",
+			Value: 60,
+		},
+	}
+}
+
+func pollQueryResult(ctx context.Context, client *api.Client, dataset string, queryID string, pollInterval time.Duration, timeout time.Duration) (*api.QueryResult, error) {
+	if pollInterval < 1*time.Second {
+		pollInterval = 1 * time.Second
+	}
+
+	result, err := client.CreateQueryResult(ctx, dataset, queryID)
+	if err != nil {
+		return nil, err
+	}
+
+	deadline := time.Now().Add(timeout)
+	for !result.Complete {
+		if time.Now().After(deadline) {
+			return nil, fmt.Errorf("timed out waiting for query result %s after %s", result.ID, timeout)
+		}
+
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-time.After(pollInterval):
+		}
+
+		result, err = client.GetQueryResult(ctx, dataset, result.ID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	warnIfEmptyResults(result, dataset)
+	return result, nil
+}
+
 func CreateQueryResultCmd() *cli.Command {
+	flags := []cli.Flag{
+		&cli.StringFlag{
+			Name:     "dataset",
+			Usage:    "Dataset slug (use __all__ for environment-wide)",
+			Required: true,
+		},
+		&cli.StringFlag{
+			Name:     "query-id",
+			Usage:    "Query ID to execute",
+			Required: true,
+		},
+	}
+	flags = append(flags, queryResultPollingFlags()...)
+
 	return &cli.Command{
 		Name:     "create-query-result",
 		Category: "Query Results",
 		Usage:    "Execute a query and return results (polls until complete)",
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:     "dataset",
-				Usage:    "Dataset slug (use __all__ for environment-wide)",
-				Required: true,
-			},
-			&cli.StringFlag{
-				Name:     "query-id",
-				Usage:    "Query ID to execute",
-				Required: true,
-			},
-			&cli.IntFlag{
-				Name:  "poll-interval",
-				Usage: "Seconds between polling attempts",
-				Value: 2,
-			},
-			&cli.IntFlag{
-				Name:  "timeout",
-				Usage: "Maximum seconds to wait for results",
-				Value: 60,
-			},
-		},
+		Flags:    flags,
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			client, err := newClient(cmd)
 			if err != nil {
@@ -47,39 +87,11 @@ func CreateQueryResultCmd() *cli.Command {
 			pollInterval := time.Duration(cmd.Int("poll-interval")) * time.Second
 			timeout := time.Duration(cmd.Int("timeout")) * time.Second
 
-			if pollInterval < 1*time.Second {
-				pollInterval = 1 * time.Second
-			}
-
-			result, err := client.CreateQueryResult(ctx, dataset, queryID)
+			result, err := pollQueryResult(ctx, client, dataset, queryID, pollInterval, timeout)
 			if err != nil {
 				return err
 			}
 
-			if result.Complete {
-				warnIfEmptyResults(result, dataset)
-				return printJSON(result)
-			}
-
-			deadline := time.Now().Add(timeout)
-			for !result.Complete {
-				if time.Now().After(deadline) {
-					return fmt.Errorf("timed out waiting for query result %s after %s", result.ID, timeout)
-				}
-
-				select {
-				case <-ctx.Done():
-					return ctx.Err()
-				case <-time.After(pollInterval):
-				}
-
-				result, err = client.GetQueryResult(ctx, dataset, result.ID)
-				if err != nil {
-					return err
-				}
-			}
-
-			warnIfEmptyResults(result, dataset)
 			return printJSON(result)
 		},
 	}

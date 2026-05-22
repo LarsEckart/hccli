@@ -73,6 +73,7 @@ Output:
 			cmd.DeleteBoardViewCmd(),
 			cmd.GetQueryCmd(),
 			cmd.CreateQueryCmd(),
+			cmd.RunQueryCmd(),
 			cmd.CreateQueryResultCmd(),
 			cmd.GetQueryResultCmd(),
 			cmd.CreateQueryAnnotationCmd(),
