@@ -10,3 +10,5 @@ hccli
 
 # OS
 .DS_Store
+
+.clawpatch
