@@ -2,6 +2,7 @@ package main_test
 
 import (
 	"encoding/json"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -21,9 +22,7 @@ func TestRunQueryCLI(t *testing.T) {
 				t.Fatalf("failed to decode create-query body: %v", err)
 			}
 			response := map[string]any{"id": "query-1"}
-			for k, v := range createdQuery {
-				response[k] = v
-			}
+			maps.Copy(response, createdQuery)
 			if err := json.NewEncoder(w).Encode(response); err != nil {
 				t.Fatalf("failed to encode create-query response: %v", err)
 			}

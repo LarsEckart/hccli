@@ -13,7 +13,7 @@ type QueryResult struct {
 	Complete bool           `json:"complete"`
 	QueryID  string         `json:"query_id,omitempty"`
 	Links    map[string]any `json:"links,omitempty"`
-	Data     QueryData      `json:"data,omitempty"`
+	Data     QueryData      `json:"data"`
 }
 
 type QueryData struct {

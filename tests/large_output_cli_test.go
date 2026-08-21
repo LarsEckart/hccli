@@ -40,7 +40,7 @@ func TestLargeOutputWritesTempFile(t *testing.T) {
 	}
 
 	// Extract temp file path and verify it exists with correct content
-	for _, line := range strings.Split(stderr, "\n") {
+	for line := range strings.SplitSeq(stderr, "\n") {
 		if strings.Contains(line, "Full output written to:") {
 			path := strings.TrimSpace(strings.SplitN(line, "Full output written to:", 2)[1])
 			data, err := os.ReadFile(path)

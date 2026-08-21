@@ -2,6 +2,7 @@ package main_test
 
 import (
 	"encoding/json"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -218,9 +219,7 @@ func TestCreateQueryOrderLimitHavingCLI(t *testing.T) {
 		}
 		w.Header().Set("Content-Type", "application/json")
 		response := map[string]any{"id": "query-1"}
-		for k, v := range request {
-			response[k] = v
-		}
+		maps.Copy(response, request)
 		if err := json.NewEncoder(w).Encode(response); err != nil {
 			t.Fatalf("failed to encode response: %v", err)
 		}

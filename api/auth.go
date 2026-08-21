@@ -46,16 +46,16 @@ type AuthV2Response struct {
 }
 
 type AuthV2IncludedResource struct {
-	ID         string                 `json:"id"`
-	Type       string                 `json:"type"`
-	Attributes map[string]interface{} `json:"attributes"`
+	ID         string         `json:"id"`
+	Type       string         `json:"type"`
+	Attributes map[string]any `json:"attributes"`
 }
 
 type AuthV2Data struct {
-	ID            string                 `json:"id"`
-	Type          string                 `json:"type"`
-	Attributes    AuthV2Attributes       `json:"attributes"`
-	Relationships map[string]interface{} `json:"relationships,omitempty"`
+	ID            string           `json:"id"`
+	Type          string           `json:"type"`
+	Attributes    AuthV2Attributes `json:"attributes"`
+	Relationships map[string]any   `json:"relationships,omitempty"`
 }
 
 type AuthV2Attributes struct {

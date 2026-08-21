@@ -1,5 +1,5 @@
 module github.com/LarsEckart/hccli
 
-go 1.26.1
+go 1.27.0
 
 require github.com/urfave/cli/v3 v3.6.2
